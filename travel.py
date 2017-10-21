@@ -601,6 +601,8 @@ class Travel(tk.Frame):
                 _from = self.popup.data._from
                 if self.popup.total == 1:
                     self.input.insert('insert', self.popup.data[0][0][_from:])
+                    if self.popup.data.insert_blank:
+                        self.input.insert('insert', ' ')
                     self.popup.quit()
                     self.adjust_xview() # after quit
                 else:
