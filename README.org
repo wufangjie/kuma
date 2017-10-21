@@ -1,0 +1,54 @@
+* Features
+** Keyboard binding
+Implement common emacs keybindings, add something I think useful, for example C-l.\\
+Search "self.input.bind(" in travel.py
+
+** Completion
+Keyword completion and path completion.\\
+Alfred's short keyword are too hard to remember, I think whole words plus completion is better\\
+I think less used applications need not to add to keyword's completions\\
+
+** Crossplatform
+Standing on the shoulder of python, I just did a little things, and more testing are waiting for me.
+
+* Shortage
+1. First time adding common app is painful
+2. Only implement exact prefix matching
+They may require a lot of os knowledges?
+
+* Require
+Pure python implemention, only python3 (with tkinter) is required
+
+
+* Set startup shortcut
+** linux
+Just bind keyboard short cut to command: python3 the_path/kuma/travel.py
+
+** windows
+1. Change travel.py ->  travel.pyw, unless there will be a console window
+2. Send to desktop shortcut
+3. Right click it, select "Properties"
+4. Select the Shortcuts tabs
+5. Click in the Shortcut key field and press Ctrl + Alt + whatever character
+
+**important**: You may have a 2-3 delay, kill "ApplicationFrameHost.exe" will solve this problem, see:
+https://answers.microsoft.com/en-us/windows/forum/windows_10-desktop/custom-keyboard-shortcuts-slow-to-execute/67afb465-e97f-4264-8ae3-84960b797dd3?page=3&auth=1
+
+* About config.org
+Emacs's org-mode is good at table and rectangle operations, recommend to you\\
+config.org's format is strict unless you implement it yourself:
+1. Colmuns must be [Keyword, Type, Description, Platform, Command]
+2. "Keyword" must be unique in certain platform
+3. "Type" must in {Web, App, Py}
+4. "Description" do not remove it even it's empty
+6. "Platform" must in {'', Windows, Linux, Darwin} or '{}+{}' form, '' means available on all platforms
+7. "Command": Web command can have at most one params, App command will run as flat shell command + your addition params, Py see following workflow.
+
+* About workflow
+You only need to implement a main function which will be called when you press <Enter> after type in the workflow's name. And the main function's returned value will influence displaying and the <Enter> callback on it, and then the callback's returned value...\\
+See base.py and my two simple workflows\\
+All workflow python file should be 'workfile_{}.py'.format(workflow_name)
+
+* About kuma and travel
+From one of the most popular cartoon "One Piece".\\
+Bartholomew Kuma, whose Devil Fruit ability can send people to every place easily, just like the thing I want my script do.
