@@ -15,7 +15,8 @@ from base import Data, Message
 
 # FIXME: if I set the frame's maxwidth != minwidth, then when the completion (say a filename) is too long, after typing enter on it, we will see cursor not in the sight of input entry, because width is shorten and it seems happens after my callback function finished (I use adjust_xview after quit popup, did not work)
 
-# TODO: when press <Enter> and if the prefix is not a path and not in keyword but is a prefix of one or some keyword, do not just raise an error
+
+# TODO: add proper error handling when run a app
 
 # TODO: about completion? greedy
 # ~/packages/em(cursor here, then Tab).org
@@ -743,9 +744,11 @@ class Travel(tk.Frame):
         if not cmd:
             return 'hold'
 
+        is_a_path = cmd[0] == '/'
         if PLATFORM == 'Windows' and cmd[0] == '/':
             cmd = cmd[1:]
         if cmd.startswith('~/'):
+            if_a_path = True
             cmd = os.path.expanduser(cmd)
         if os.path.isdir(cmd) or os.path.isfile(cmd):
             # Only open dir or file, I think it's no need to catch exception
@@ -761,11 +764,28 @@ class Travel(tk.Frame):
                 subprocess.Popen([open_command[PLATFORM], cmd],
                                  start_new_session=True)
             return 'destroy'
+        if is_a_path:
+            return Message('Invalidated path!')
 
         keyword, *params = cmd.split(' ', maxsplit=1)
         self.load_keywords()
         if keyword not in self.kv_dict:
-            return Message('Unknown keyword: {}!'.format(keyword))
+            self.load_keywords()
+            pre = cmd
+            i = bisect.bisect_left(self.keywords, pre)
+            result = []
+            while i < self.nkeyword:
+                if not self.keywords[i].startswith(pre):
+                    break
+                result.append(self.kv_list[i])
+                i += 1
+            if not result:
+                return Message('Unknown keyword: {}!'.format(keyword))
+            result.sort(key=lambda x: x[1]) # stable sort
+            self.input.delete(0, self.pos_end)
+            self.input.insert(0, pre)
+            self._complete(result, pre, True)
+            return 'hold'
         else:
             params = params[0].strip() if params else ''
             typ, val = self.kv_dict[keyword]
@@ -782,14 +802,13 @@ class Travel(tk.Frame):
                 # c.open('http://www.python.org')
                 # c.open_new_tab('http://docs.python.org')
             elif typ == 'App':
-                try:
-                    p = subprocess.Popen(val + ' ' + params,
-                                         shell=True, start_new_session=True)
-                    print(p.__dict__)
-                except Exception as e:
-                    return Message(repr(e))
-                else:
-                    return 'destroy'
+                p = subprocess.Popen(val + ' ' + params,
+                                     shell=True, start_new_session=True)
+                # try:
+                # except Exception as e:
+                #     return Message(repr(e))
+                # else:
+                return 'destroy'
             elif typ == 'Py':
                 dct = {}
                 try:
