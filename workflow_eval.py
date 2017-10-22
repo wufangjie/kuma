@@ -5,7 +5,6 @@ from itertools import *
 import math
 from math import *
 
-raise Exception('hello')
 
 def main(params):
     try:
