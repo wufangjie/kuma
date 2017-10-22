@@ -1,15 +1,16 @@
 * Features
 ** Emacs keybinding
-Implement common emacs keybindings, add something I think useful, for example C-l.\\
-Search "self.input.bind(" in travel.py
+Implement commonly used emacs keybindings, add something I think useful, for example C-l.\\
+Search "self.input.bind(" in travel.py for details.
 
 ** Completion
-Keyword completion and path completion\\
-Alfred's short keyword are too hard to remember, I think whole words plus completion is better\\
-I think less used applications need not to add to keyword's completions\\
+1. Keyword completion and path completion
+2. path completion should start with ~/ or /, note Windows should too
+3. short keywords are too hard to remember, I think whole word plus completion is better
+4. think less used applications need not to add to keyword's completions
 
 ** Cross platform
-Standing on the shoulder of python, I just did a little things, and more testing are waiting for me.
+Standing on the shoulder of python, I just did a few things, and more testing are waiting for me.
 
 * Shortages
 1. First time adding commonly used apps is painful
@@ -30,7 +31,7 @@ Just bind keyboard short cut to command: python3 the_path/kuma/travel.py
 4. Select the Shortcuts tabs
 5. Click in the Shortcut key field and press Ctrl + Alt + whatever character
 
-**important**: You may have a 2-3 delay, kill "ApplicationFrameHost.exe" will solve this problem, see:
+**important**: You may have a 2-3 delay in win10, kill "ApplicationFrameHost.exe" will solve this problem, see:
 https://answers.microsoft.com/en-us/windows/forum/windows_10-desktop/custom-keyboard-shortcuts-slow-to-execute/67afb465-e97f-4264-8ae3-84960b797dd3?page=3&auth=1
 
 * About config.org
@@ -39,7 +40,7 @@ config.org's format is strict unless you implement it yourself:
 1. Colmuns must be [Keyword, Type, Description, Platform, Command]
 2. "Keyword" must be unique in certain platform
 3. "Type" must in {Web, App, Py}
-4. "Description" do not remove it even it's empty
+4. "Description" do not remove it even if it is empty
 6. "Platform" must in {'', Windows, Linux, Darwin} or '{}+{}' form, '' means available on all platforms
 7. "Command": Web command can have at most one params, App command will run as flat shell command + your additional param, Py see following workflow.
 
