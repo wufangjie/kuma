@@ -13,10 +13,9 @@ from base import Data, Message
 
 
 
-# FIXME: directory's sep will influence the sequence of completions
-
 # FIXME: if I set the frame's maxwidth != minwidth, then when the completion (say a filename) is too long, after typing enter on it, we will see cursor not in the sight of input entry, because width is shorten and it seems happens after my callback function finished (I use adjust_xview after quit popup, did not work)
 
+# TODO: when press <Enter> and if the prefix is not a path and not in keyword but is a prefix of one or some keyword, do not just raise an error
 
 # TODO: about completion? greedy
 # ~/packages/em(cursor here, then Tab).org
@@ -380,7 +379,7 @@ def kill(func):
             self.popup.quit()
         self.adjust_xview()
         self.mark = None
-        self.previous = 'delete' if func.__name__.endswith('char') else 'kill'
+        self.previous = 'delete' if func.__name__.endswith('_char') else 'kill'
         return 'break'
     return wrapper
 
@@ -507,7 +506,7 @@ class Travel(tk.Frame):
         self.input.bind('<Escape>', self.quit)
 
         self.win_drives = None
-        self.win_drive_template = '{}:' + os.path.sep
+        self.win_drive_template = '{}:/'# + os.path.sep
 
 
 
@@ -642,8 +641,9 @@ class Travel(tk.Frame):
             for root, dirs, files in os.walk(dirname):
                 if root != dirname:
                     break
-                result.extend(sorted((d + os.path.sep, 'D') for d in dirs
+                result.extend(sorted((d + '/', 'D') for d in dirs
                                      if d.startswith(basename)))
+                # os.path.sep -> '/', ord('/') = 47 while ord('\\') = 92
                 result.extend(sorted((f, '') for f in files
                                      if f.startswith(basename)))
             self._complete(result, basename)
