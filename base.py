@@ -31,14 +31,17 @@ class Data:
         You can control the popup's behavior through the value you return
         1. 'hold' (lower case) will keep the current popup
         2. an object of Data will update the popup with the new data
-        3. others will destroy the current popup
+        3. an object of Message will display one message,
+           then destroy it after some seconds
         4. 'destroy' (lower case) will destroy the app
+        5. others will destroy the current popup
 
-        Explanation of above four:
+        Explanation of above five:
         1. for continuous operations, for example volume adjustment
         2. through it long workflow become possible
-        3. if the popup is just for displaying or workflow is finished
+        3. for example show error message
         4. finished and quit
+        5. for example completion finished
 
         Advanced
         --------
