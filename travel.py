@@ -657,7 +657,46 @@ class Travel(tk.Frame):
             self._complete(result, pre)
         return 'break'
 
+    def _complete(self, result, pre):
+        n = len(result)
+        start = len(pre)
+        if n > 1:
+            prefix = self.longest_common_prefix(result, start)
+            if len(prefix) > start:
+                self.input.insert('insert', prefix[start:])
+                self.adjust_xview()
+            self.popup.update_data(DataComplete(result, len(prefix)))
+        elif n == 1:
+            self.insert_one_greedy(result[0][0], start)
+        else:
+            self.popup.quit()
+
+    def longest_common_prefix(self, result, start):
+        n = len(result)
+        min_idx, max_idx = 0, n - 1
+        for i in range(1, n): # n not n - 1
+            if result[i][1] != result[i - 1][1]:
+                if result[i - 1][0] > result[max_idx][0]:
+                    max_idx = i - 1
+                if result[i][0] < result[min_idx][0]:
+                    min_idx = i
+        min_res, max_res = result[min_idx][0], result[max_idx][0]
+        n = min(len(min_res), len(max_res))
+        for i in range(start, n):
+            if min_res[i] < max_res[i]:
+                return min_res[:i]
+        return min_res[:n]
+
     def insert_one_greedy(self, data, start):
+        """
+        Greedy tail match completion and inserting
+
+        for example:
+        ~/packages/em(cursor here, then Tab).org
+        should to ~/packages/emacs.org, rather than ~/packages/emacs.org.org
+
+        ba(cursor here, then Tab)u hello -> baidu (cursor here)hello
+        """
         content = self.input.get()
         pos_cur = self.pos_cur
         data = data[start:]
@@ -696,38 +735,7 @@ class Travel(tk.Frame):
                 self.input.insert('insert', ' ')
             else:
                 self.input.icursor(pos_cur + len(data) + 1)
-
         self.adjust_xview()
-
-    def _complete(self, result, pre):
-        n = len(result)
-        start = len(pre)
-        if n > 1:
-            prefix = self.longest_common_prefix(result, start)
-            if len(prefix) > start:
-                self.input.insert('insert', prefix[start:])
-                self.adjust_xview()
-            self.popup.update_data(DataComplete(result, len(prefix)))
-        elif n == 1:
-            self.insert_one_greedy(result[0][0], start)
-        else:
-            self.popup.quit()
-
-    def longest_common_prefix(self, result, start):
-        n = len(result)
-        min_idx, max_idx = 0, n - 1
-        for i in range(1, n): # n not n - 1
-            if result[i][1] != result[i - 1][1]:
-                if result[i - 1][0] > result[max_idx][0]:
-                    max_idx = i - 1
-                if result[i][0] < result[min_idx][0]:
-                    min_idx = i
-        min_res, max_res = result[min_idx][0], result[max_idx][0]
-        n = min(len(min_res), len(max_res))
-        for i in range(start, n):
-            if min_res[i] < max_res[i]:
-                return min_res[:i]
-        return min_res[:n]
 
     def key_press(self, event):
         """NOTE: character won't be inserted unless the function is finished"""
