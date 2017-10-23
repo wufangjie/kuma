@@ -811,7 +811,7 @@ class Travel(tk.Frame):
             result.sort(key=lambda x: x[1]) # stable sort
             self.input.delete(0, self.pos_end)
             self.input.insert(0, pre)
-            self._complete(result, pre, True)
+            self._complete(result, pre)
             return 'hold'
         else:
             params = params[0].strip() if params else ''
