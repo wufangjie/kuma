@@ -18,11 +18,6 @@ from base import Data, Message
 
 # TODO: add proper error handling when run a app
 
-# TODO: about completion? greedy
-# ~/packages/em(cursor here, then Tab).org
-# should to ~/packages/emacs.org
-# rather than ~/packages/emacs.org.org
-
 # TODO: more smooth continuous movement (a char)? (when call by script improved a bit)
 
 # TODO: I didn't have a mac, so I can not test all the mac thing, may do those on a virtual machine
@@ -141,25 +136,23 @@ hl_bg = '#4682b4'
 hl_fg = '#ffffff'
 
 
-font_main = ('monaco', 16)
-font_desc = ('monaco', 12)
+font_main = ('monaco', 20)
+font_desc = ('monaco', 14)
 
+
+# font_main = ('monaco', 16)
+# font_desc = ('monaco', 12)
 
 
 
 
 class DataComplete(Data):
-    def __init__(self, data, _from=0, insert_blank=False):
+    def __init__(self, data, _from=0):
         super().__init__(data)
         self._from = _from
-        self.insert_blank = insert_blank
 
     def run(self, app, idx):
-        app.input.insert('insert', self.data[idx][0][self._from:])
-        if self.insert_blank:
-            app.input.insert('insert', ' ')
-        #app.popup.quit()
-        app.adjust_xview()
+        app.insert_one_greedy(self.data[idx][0], self._from)
         app.save_state_if_needed()
 
 
@@ -598,14 +591,11 @@ class Travel(tk.Frame):
             if previous == 'tab':
                 self.popup.cycle_page(event)
             elif previous == 'insert':
-                _from = self.popup.data._from
                 if self.popup.total == 1:
-                    self.input.insert('insert', self.popup.data[0][0][_from:])
-                    if self.popup.data.insert_blank:
-                        self.input.insert('insert', ' ')
-                    self.popup.quit()
-                    self.adjust_xview() # after quit
+                    self.insert_one_greedy(
+                        self.popup.data[0][0], self.popup.data._from)
                 else:
+                    _from = self.popup.data._from
                     prefix = self.longest_common_prefix(self.popup.data, _from)
                     if len(prefix) > _from:
                         self.input.insert('insert', prefix[_from:])
@@ -627,11 +617,13 @@ class Travel(tk.Frame):
                     if lpre > 0:
                         temp = self.win_drive_template.format(pre[1])
                         if os.path.isdir(temp):
-                            self.input.insert(pos_cur, temp[lpre:])
+                            self.insert_one_greedy(temp, lpre)
+                            # self.input.insert(pos_cur, temp[lpre:])
                     else:
                         self.get_win_drives()
                         if len(self.win_drives) == 1:
-                            self.input.insert(pos_cur, self.win_drives[0])
+                            self.insert_one_greedy(self.win_drives[0], 0)
+                            # self.input.insert(pos_cur, self.win_drives[0])
                         else:
                             self.popup.update_data(self.win_drives)
                     return 'break'
@@ -662,27 +654,64 @@ class Travel(tk.Frame):
                     i += 1
                 result.sort(key=lambda x: x[1]) # stable sort
 
-            insert_blank = False if content[pos_cur:pos_cur+1] == ' ' else True
-            self._complete(result, pre, insert_blank)
+            self._complete(result, pre)
         return 'break'
 
-    def _complete(self, result, pre, insert_blank=False):
+    def insert_one_greedy(self, data, start):
+        content = self.input.get()
+        pos_cur = self.pos_cur
+        data = data[start:]
+
+        # space will not occur in keyword
+        # a directory or file can endswith space
+
+        # two case [non-greedy, greedy] should insert or not
+        insert_blank = [content[pos_cur:pos_cur+1] != ' ', True]
+        tail = content[pos_cur:]
+        is_keyword = True
+        if content.startswith('~/') or content.startswith('/'):
+            is_keyword = False
+            for i, c in enumerate(tail):
+                if c == '/' or (PLATFORM == 'Windows' and c == '\\'):
+                    tail = tail[:i] + '/'
+                    break
+        else:
+            for i, c in enumerate(tail):
+                if c == ' ':
+                    insert_blank[1] = False
+                    tail = tail[:i]
+                    break
+
+        self.popup.quit()
+        if tail and data.endswith(tail):
+            self.input.insert(pos_cur, data[:-len(tail)])
+            self.input.icursor(pos_cur + len(data))
+            insert_blank = insert_blank[1]
+        else:
+            self.input.insert(pos_cur, data)
+            insert_blank = insert_blank[0]
+
+        if is_keyword:
+            if insert_blank:
+                self.input.insert('insert', ' ')
+            else:
+                self.input.icursor(pos_cur + len(data) + 1)
+
+        self.adjust_xview()
+
+    def _complete(self, result, pre):
         n = len(result)
         start = len(pre)
         if n > 1:
             prefix = self.longest_common_prefix(result, start)
-            if prefix != pre:
+            if len(prefix) > start:
                 self.input.insert('insert', prefix[start:])
                 self.adjust_xview()
-            self.popup.update_data(
-                DataComplete(result, len(prefix), insert_blank))
+            self.popup.update_data(DataComplete(result, len(prefix)))
+        elif n == 1:
+            self.insert_one_greedy(result[0][0], start)
         else:
             self.popup.quit()
-            if n == 1:
-                self.input.insert('insert', result[0][0][start:])
-                if insert_blank:
-                    self.input.insert('insert', ' ')
-                self.adjust_xview()
 
     def longest_common_prefix(self, result, start):
         n = len(result)
@@ -717,9 +746,7 @@ class Travel(tk.Frame):
                 elif len(result) == len(self.popup.data):
                     self.popup.data._from += 1
                 else:
-                    self.popup.update_data(
-                        DataComplete(
-                            result, _from + 1, self.popup.data.insert_blank))
+                    self.popup.update_data(DataComplete(result, _from + 1))
 
     def run(self, event):
         ret = self._run(event)
