@@ -1,4 +1,12 @@
 * Features
+** Usage
+Productivity at your Fingertips:
+1. search the web
+2. run applications
+3. open file with deafult application
+4. eval one line python code (advanced calculator)
+5. your imagination
+
 ** Emacs keybinding
 Implement commonly used emacs keybindings, add something I think useful, for example C-l.\\
 Search "self.input.bind(" in travel.py for details.
