@@ -6,6 +6,7 @@ Productivity at your Fingertips:
 3. open file with deafult application
 4. eval one line python code (advanced calculator)
 5. your imagination
+NOTE: use space to seperate keyword and parameter
 
 ** Emacs keybinding
 Implement commonly used emacs keybindings, add something I think useful, for example C-l.\\
@@ -13,7 +14,7 @@ Search "self.input.bind(" in travel.py for details.
 
 ** Completion
 1. Keyword completion and path completion
-2. path completion should start with ~/ or /, note Windows should too
+2. path completion should start with ~/ or /, NOTE: Windows should too
 3. short keywords are too hard to remember, I think whole word plus completion is better
 4. think less used applications need not to add to keyword's completions
 
