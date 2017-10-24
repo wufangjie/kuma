@@ -30,3 +30,4 @@
 |-----------------------+------+-------------+----------+----------------------------------------------------------------------------|
 | umount                | Py   |             | Linux    | display unmountable devices and select to unmount                          |
 | eval                  | Py   |             |          | evaluate one line python code                                              |
+| bringtotop            | Py   |             | Windows  | bring application which match regular expression to top level              |
