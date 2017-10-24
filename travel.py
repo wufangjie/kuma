@@ -16,7 +16,6 @@ from base import Data, Message
 # FIXME: if I set the frame's maxwidth != minwidth, then when the completion (say a filename) is too long, after typing enter on it, we will see cursor not in the sight of input entry, because width is shorten and it seems happens after my callback function finished (I use adjust_xview after quit popup, did not work)
 
 
-# TODO: add proper error handling when run a app
 
 # TODO: more smooth continuous movement (a char)? (when call by script improved a bit)
 
@@ -783,22 +782,26 @@ class Travel(tk.Frame):
         if PLATFORM == 'Windows' and cmd[0] == '/':
             cmd = cmd[1:]
         if cmd.startswith('~/'):
-            if_a_path = True
+            is_a_path = True
             cmd = os.path.expanduser(cmd)
         if os.path.isdir(cmd) or os.path.isfile(cmd):
             # Only open dir or file, I think it's no need to catch exception
             if PLATFORM == 'Windows':
                 # It's strange that shell=True can not be omitted
                 if os.path.isdir(cmd):
-                    subprocess.Popen(
-                        ['start', cmd], shell=True, start_new_session=True)
+                    return self._subprocess_popen(['start', cmd], shell=True)
+                    # subprocess.Popen(
+                    #     ['start', cmd], shell=True, start_new_session=True)
                 else:
-                    subprocess.Popen(
-                        ['call', cmd], shell=True, start_new_session=True)
+                    return self._subprocess_popen(['call', cmd], shell=True)
+                    # subprocess.Popen(
+                    #     ['call', cmd], shell=True, start_new_session=True)
             else:
-                subprocess.Popen([open_command[PLATFORM], cmd],
-                                 start_new_session=True)
-            return 'destroy'
+                return self._subprocess_popen(
+                    [open_command[PLATFORM], cmd], shell=False)
+                # subprocess.Popen([open_command[PLATFORM], cmd],
+                #                  start_new_session=True)
+            # return 'destroy'
         if is_a_path:
             return Message('Invalidated path!')
 
@@ -837,13 +840,14 @@ class Travel(tk.Frame):
                 # c.open('http://www.python.org')
                 # c.open_new_tab('http://docs.python.org')
             elif typ == 'App':
-                p = subprocess.Popen(val + ' ' + params,
-                                     shell=True, start_new_session=True)
-                # try:
-                # except Exception as e:
-                #     return Message(repr(e))
-                # else:
-                return 'destroy'
+                return self._subprocess_popen(val + ' ' + params, shell=True)
+                # p = subprocess.Popen(val + ' ' + params,
+                #                      shell=True, start_new_session=True)
+                # # try:
+                # # except Exception as e:
+                # #     return Message(repr(e))
+                # # else:
+                # return 'destroy'
             elif typ == 'Py':
                 dct = {}
                 try:
@@ -854,6 +858,22 @@ class Travel(tk.Frame):
             else:
                 return Message('Unknown type: {}!'.format(typ))
 
+    def _subprocess_popen(self, cmd, shell):
+        p = subprocess.Popen(cmd, shell=shell, start_new_session=True,
+                             stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE, universal_newlines=True)
+        try:
+            _, err = p.communicate(timeout=0.1) # 0.1s
+        except subprocess.TimeoutExpired:
+            err = ''
+
+        if PLATFORM == 'Linux':
+            subprocess.call(['kill', str(p.pid)]) # kill sh -c ... process
+
+        if err:
+            return Message(err.strip())
+        else:
+            return 'destroy'
 
     @move
     def forward_char(self, event):
