@@ -20,7 +20,7 @@ Implement commonly used emacs keybindings, add something I think useful, for exa
 *** Enter
 1. run command
 2. select completion
-3. if command is not a path, not in keywords and is a prefix of some keywords, then comple
+3. if command is not a path, not in keywords and is a prefix of some keywords, then complete
 4. run user-defined callback
 
 *** Escape
@@ -68,10 +68,10 @@ NOTE for move_to_golden_row (recommend):
 #+BEGIN_EXAMPLE
 if a popup has 9 rows:
     if the highlighted row in the upper half:
-        then jump to line 7 will let you go any row within 3 keystokes
+        then jump to line 7 will let you go to any row within 3 keystokes
     else:
         jump to line 3
-so do other rows
+so do other rows popup
 #+END_EXAMPLE
 
 ** Completion
