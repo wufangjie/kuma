@@ -54,7 +54,7 @@ def main(param):
 
     param = param.strip()
     if param:
-        reg_param = re.compile(param)
+        reg_param = re.compile(param, re.IGNORECASE)
         ret = []
         for h, t in ht_pairs:
             c = win32gui.GetClassName(h)
