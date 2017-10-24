@@ -1,4 +1,4 @@
-from base import Data
+from base import Data, Message
 import subprocess
 
 
@@ -6,7 +6,7 @@ class DataUmount(Data):
     def run(self, app, idx):
         msg = subprocess.getoutput(
             'umount ' + self.data[idx][0].split(' ', 1)[0])
-        return 'destroy' if msg == '' else msg
+        return 'destroy' if msg == '' else Message(msg)
 
 
 def main(params):
