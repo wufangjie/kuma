@@ -15,7 +15,7 @@
 | zhihu                 | Web  |             |          | https://www.zhihu.com/search?type=content&q={}                             |
 |-----------------------+------+-------------+----------+----------------------------------------------------------------------------|
 | emacs                 | App  |             | Linux    | /usr/bin/emacs -fs                                                         |
-| firefox               | App  |             | Linux    | firefo                                                                     |
+| firefox               | App  |             | Linux    | firefox                                                                    |
 | thunar                | App  |             | Linux    | xdg-open ~/                                                                |
 | terminal              | App  |             | Linux    | xfce4-terminal                                                             |
 | apt                   | App  |             | Linux    | synaptic-pkexec                                                            |
