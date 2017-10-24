@@ -9,8 +9,70 @@ Productivity at your Fingertips:
 NOTE: use space to seperate keyword and parameter
 
 ** Emacs keybinding
-Implement commonly used emacs keybindings, add something I think useful, for example C-l.\\
-Search "self.input.bind(" in travel.py for details.
+Implement commonly used emacs keybindings, add something I think useful, for example C-l.
+
+*** Tab
+1. complete
+2. insert (if only one completion)
+3. insert longest common prefix
+4. greedy tail match completion (see travel.py insert_one_greedy function)
+
+*** Enter
+1. run command
+2. select completion
+3. if command is not a path, not in keywords and is a prefix of some keywords, then comple
+4. run user-defined callback
+
+*** Escape
+if popup exist quit it, or quit kuma
+
+*** C-g
+if popup exist quit it, or unhighlight input's selection
+
+*** input entry movement
+| function                | shortcut    |                 |
+|-------------------------+-------------+-----------------|
+| forward_char            | C-f         |                 |
+| backward_char           | C-b         |                 |
+| forward_word            | M-f         |                 |
+| backward_word           | M-b         |                 |
+| move_beginning_of_line  | C-a         |                 |
+| move_end_of_line        | C-e         |                 |
+| delete_char             | C-d         |                 |
+| backward_delete_char    | BackSpace   |                 |
+| kill_word               | M-d         |                 |
+| backward_kill_word      | M-BackSpace |                 |
+| kill_line               | C-k         |                 |
+| backward_kill_line      |             |                 |
+| set_mark                | C-space     |                 |
+| set_mark                | C-@         | for Windows     |
+| exchange_point_and_mark | C-x         | emacs's C-x C-x |
+| select_all              | M-h         |                 |
+| copy                    | M-w         |                 |
+| cut                     | C-w         |                 |
+| paste                   | C-y         |                 |
+| undo                    | C-/         |                 |
+| transpose_chars         | C-t         |                 |
+
+*** popup data movement
+| function           | shortcut |         |
+|--------------------+----------+---------|
+| next_page          | M-]      | <Right> |
+| previous_page      | M-[      | <Left>  |
+| next_row           | C-n      | <Down>  |
+| previous_row       | C-p      | <Up>    |
+| end_of_data        | M->      |         |
+| beginning_of_data  | M-<      |         |
+| move_to_golden_row | C-l      |         |
+NOTE for move_to_golden_row (recommend):
+#+BEGIN_EXAMPLE
+if a popup has 9 rows:
+    if the highlighted row in the upper half:
+        then jump to line 7 will let you go any row within 3 keystokes
+    else:
+        jump to line 3
+so do other rows
+#+END_EXAMPLE
 
 ** Completion
 1. Keyword completion and path completion
