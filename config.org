@@ -1,33 +1,33 @@
-| Keyword               | Type | Description | Platform | Command                                                                    |
-|-----------------------+------+-------------+----------+----------------------------------------------------------------------------|
-| baidu                 | Web  |             |          | https://www.baidu.com/s?wd={}                                              |
-| bing                  | Web  |             |          | https://www.bing.com/search?q={}                                           |
-| bing-global           | Web  |             |          | https://global.bing.com/search?q={}&setmkt=en-us&setlang=en-us&FORM=SECNEN |
-| bing-dict             | Web  |             |          | https://www.bing.com/dict/search?q={}                                      |
-| douban                | Web  |             |          | https://www.douban.com/search?q={}                                         |
-| douban-book           | Web  |             |          | https://book.douban.com/subject_search?search_text={}&cat=1001             |
-| douban-movie          | Web  |             |          | https://movie.douban.com/subject_search?search_text={}&cat=1002            |
-| github                | Web  |             |          | https://github.com/search?q={}                                             |
-| jingdong              | Web  |             |          | https://search.jd.com/Search?keyword={}&enc=utf-8                          |
-| stackoverflow         | Web  |             |          | https://stackoverflow.com/search?q={}                                      |
-| taobao                | Web  |             |          | https://s.taobao.com/search?q={}                                           |
-| wiki                  | Web  |             |          | https://en.wikipedia.org/wiki/{}                                           |
-| zhihu                 | Web  |             |          | https://www.zhihu.com/search?type=content&q={}                             |
-|-----------------------+------+-------------+----------+----------------------------------------------------------------------------|
-| emacs                 | App  |             | Linux    | /usr/bin/emacs -fs                                                         |
-| firefox               | App  |             | Linux    | firefox                                                                    |
-| thunar                | App  |             | Linux    | xdg-open ~/                                                                |
-| terminal              | App  |             | Linux    | xfce4-terminal                                                             |
-| apt                   | App  |             | Linux    | synaptic-pkexec                                                            |
-| steam                 | App  |             | Linux    | /usr/bin/steam                                                             |
-| libreoffice           | App  |             | Linux    | libreoffice                                                                |
-| audio                 | App  |             | Linux    | pavucontrol                                                                |
-| task                  | App  |             | Linux    | xfce4-taskmanager                                                          |
-| window-manager        | App  |             | Linux    | xfwm4-settings                                                             |
-| window-manager-tweaks | App  |             | Linux    | xfwm4-tweaks-settings                                                      |
-| keyboard              | App  |             | Linux    | xfce4-keyboard-settings                                                    |
-| qq                    | App  |             | Windows  | C:\Program Files (x86)\Tencent\QQ\Bin\QQ.exe                               |
-|-----------------------+------+-------------+----------+----------------------------------------------------------------------------|
-| umount                | Py   |             | Linux    | display unmountable devices and select to unmount                          |
-| eval                  | Py   |             |          | evaluate one line python code                                              |
-| bringtotop            | Py   |             | Windows  | bring application which match regular expression to top level              |
+| Keyword               | Type | Description | Platform      | Command                                                                    |
+|-----------------------+------+-------------+---------------+----------------------------------------------------------------------------|
+| baidu                 | Web  |             |               | https://www.baidu.com/s?wd={}                                              |
+| bing                  | Web  |             |               | https://www.bing.com/search?q={}                                           |
+| bing-global           | Web  |             |               | https://global.bing.com/search?q={}&setmkt=en-us&setlang=en-us&FORM=SECNEN |
+| bing-dict             | Web  |             |               | https://www.bing.com/dict/search?q={}                                      |
+| douban                | Web  |             |               | https://www.douban.com/search?q={}                                         |
+| douban-book           | Web  |             |               | https://book.douban.com/subject_search?search_text={}&cat=1001             |
+| douban-movie          | Web  |             |               | https://movie.douban.com/subject_search?search_text={}&cat=1002            |
+| github                | Web  |             |               | https://github.com/search?q={}                                             |
+| jingdong              | Web  |             |               | https://search.jd.com/Search?keyword={}&enc=utf-8                          |
+| stackoverflow         | Web  |             |               | https://stackoverflow.com/search?q={}                                      |
+| taobao                | Web  |             |               | https://s.taobao.com/search?q={}                                           |
+| wiki                  | Web  |             |               | https://en.wikipedia.org/wiki/{}                                           |
+| zhihu                 | Web  |             |               | https://www.zhihu.com/search?type=content&q={}                             |
+|-----------------------+------+-------------+---------------+----------------------------------------------------------------------------|
+| emacs                 | App  |             | Linux         | /usr/bin/emacs -fs                                                         |
+| firefox               | App  |             | Linux         | firefox                                                                    |
+| thunar                | App  |             | Linux         | xdg-open ~/                                                                |
+| terminal              | App  |             | Linux         | xfce4-terminal                                                             |
+| apt                   | App  |             | Linux         | synaptic-pkexec                                                            |
+| steam                 | App  |             | Linux         | /usr/bin/steam                                                             |
+| libreoffice           | App  |             | Linux         | libreoffice                                                                |
+| audio                 | App  |             | Linux         | pavucontrol                                                                |
+| task                  | App  |             | Linux         | xfce4-taskmanager                                                          |
+| window-manager        | App  |             | Linux         | xfwm4-settings                                                             |
+| window-manager-tweaks | App  |             | Linux         | xfwm4-tweaks-settings                                                      |
+| keyboard              | App  |             | Linux         | xfce4-keyboard-settings                                                    |
+| qq                    | App  |             | Windows       | C:\Program Files (x86)\Tencent\QQ\Bin\QQ.exe                               |
+|-----------------------+------+-------------+---------------+----------------------------------------------------------------------------|
+| umount                | Py   |             | Linux         | display unmountable devices and select to unmount                          |
+| eval                  | Py   |             |               | evaluate one line python code                                              |
+| bringtotop            | Py   |             | Windows+Linux | bring application which match regular expression to top level              |
