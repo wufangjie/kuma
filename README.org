@@ -8,6 +8,9 @@ Productivity at your Fingertips:
 5. your imagination
 NOTE: use space to seperate keyword and parameter
 
+** Tricks
+1. Space is not supposed to occur in keyword, indeed I use it to recognize keyword, but you can use it for completion (for commonly use command)
+
 ** Emacs keybinding
 Implement commonly used emacs keybindings, add something I think useful, for example C-l.
 
