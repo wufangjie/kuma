@@ -30,4 +30,5 @@
 |-----------------------+------+-------------+---------------+----------------------------------------------------------------------------|
 | umount                | Py   |             | Linux         | display unmountable devices and select to unmount                          |
 | eval                  | Py   |             |               | evaluate one line python code                                              |
-| bringtotop            | Py   |             | Windows+Linux | bring application which match regular expression to top level              |
+| show_or_die           | Py   |             | Windows+Linux | bring application which match regular expression to top level              |
+| show_or_die $kuma     |      |             |               | kill all kuma                                                              |
