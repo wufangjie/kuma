@@ -116,11 +116,13 @@ def is_inserting(event):
     TODO: find a document or post which declare it, test on Mac
     """
     if event.char != '':
-        if event.state < 4:
-            return True
-        else:
-            NumLock = 8 if PLATFORM == 'Windows' else 16
-            if NumLock <= event.state <= NumLock + 3:
+        # Windows: NumLock, ScrLk, NumLock+ScrLk
+        # Linux: NumLock
+        poss = (0, 8, 32, 40) if PLATFORM == 'Windows' else (0, 16)
+        for p in poss:
+            if event.state < p:
+                break
+            elif event.state < p + 4: # Shift, Caps Lock
                 return True
     return False
 
@@ -166,7 +168,7 @@ class Row(tk.Frame):
         self.master = master
         self.index = index
 
-        self.left = tk.Label(self, width=4, anchor='w', font=font_main, bg=bg)
+        self.left = tk.Label(self, anchor='w', font=font_main, bg=bg)
         self.left.pack(fill='y', side='left')
         self.right = tk.Label(self, anchor='w', font=font_main, bg=bg)
         self.right.pack(fill='x')
@@ -183,11 +185,12 @@ class Row(tk.Frame):
         self.left['fg'] = self.right['fg'] = fg
         self.down['fg'] = desc_fg
 
-    def update_data(self, data):
+    def update_data(self, data, type_width):
         n = len(data)
         assert n > 0
         self.right['text'] = data[0]
         self.left['text'] = data[1] if n > 1 else ''
+        self.left['width'] = type_width + 1 if type_width else 0
         if n < 3 or not data[2]:
             # self.down['text'] = ''
             if self.down_packed:
@@ -241,12 +244,15 @@ class Popup(tk.Frame):
     def update_display(self):
         start = self.ipage * self.maxdisp
         hl_max = self.total - start
+
+        type_width = max(len(self.data[start + i][1])
+                         for i in range(min(hl_max, self.maxdisp)))
         for i, row in enumerate(self.rows):
             if i < hl_max:
                 if not self.packed[i]:
                     row.pack(fill='x')
                     self.packed[i] = True
-                row.update_data(self.data[start + i])
+                row.update_data(self.data[start + i], type_width)
             else:
                 row.pack_forget()
                 self.packed[i] = False
@@ -1134,11 +1140,9 @@ class Travel(tk.Frame):
 
 
 if True:#__name__ == '__main__':
-    # toc = time.time()
-    # t1 = '{:.4f}'.format(toc - tic)
-    # tic = time.time()
     root = tk.Tk()
-    root.title('If you were to go on a trip... where would you like to go?')
+    root.title('kuma')
+    # 'If you were to go on a trip... where would you like to go?')
 
     width, height = root.maxsize()
     width_min = width * 5 // 12
@@ -1147,11 +1151,14 @@ if True:#__name__ == '__main__':
     root.minsize(width_min, 1)
     root.resizable(0, 0)
     root.geometry('+{}+{}'.format((width - width_min) // 2, height // 3))
-    # toc = time.time()
-    # t2 = '{:.4f}'.format(toc - tic)
-    # tic = time.time()
+
     app = Travel(master=root)
-    # t3 = '{:.4f}'.format(time.time() - tic)
-    # app.input.insert(0, '{} {} {}'.format(t1, t2, t3))
+
+    # app.lift()
+    # root.wm_attributes('-topmost', 1)
+    # NOTE: the only reason you keep kuma is comparing with other data,
+    # so I decide keeping kuma topmost
+    # root.call('wm', 'attributes', '.', '-topmost', '1')
+
     if _call_by == 'script':
         app.mainloop()
