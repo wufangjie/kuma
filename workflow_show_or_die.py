@@ -168,7 +168,7 @@ def main(pattern):
         if not ret:
             return Message('No matched application to kill')
         if hasattr(ret[0], '__len__'):
-            return DataToKill(ret)
+            return DataToKill(sorted(ret))
         else:
             for hw in ret:
                 obj.show_window(hw) # some application will pop up a quit dialog
