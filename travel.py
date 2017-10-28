@@ -13,6 +13,18 @@ from base import Data, Message
 
 
 
+
+# TODO: add global hotkey to implement warm start, change destroy to hide using:
+# windows win32gui.RegisterHotKey
+# # hide
+# root.withdraw()
+# # show
+# root.update()
+# root.deiconify()
+
+
+
+
 # FIXME: if I set the frame's maxwidth != minwidth, then when the completion (say a filename) is too long, after typing enter on it, we will see cursor not in the sight of input entry, because width is shorten and it seems happens after my callback function finished (I use adjust_xview after quit popup, did not work)
 
 
@@ -809,12 +821,11 @@ class Travel(tk.Frame):
                 #                  start_new_session=True)
             # return 'destroy'
         if is_a_path:
-            return Message('Invalidated path!')
+            return Message('Invalid path!')
 
         keyword, *params = cmd.split(' ', maxsplit=1)
         self.load_keywords()
         if keyword not in self.kv_dict:
-            self.load_keywords()
             pre = cmd
             i = bisect.bisect_left(self.keywords, pre)
             result = []
