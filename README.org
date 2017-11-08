@@ -9,7 +9,7 @@ Productivity at your Fingertips:
 NOTE: use space to seperate keyword and parameter
 
 ** Tricks
-1. Space is not supposed to occur in keyword, indeed I use it to recognize keyword, but you can use it for completion (for commonly use command)
+1. Space is not supposed to occur in keyword, indeed I use it to recognize keyword, but you can use it for completion (for commonly used command)
 
 ** Emacs keybinding
 Implement commonly used emacs keybindings, add something I think useful, for example C-l.
@@ -25,10 +25,12 @@ Implement commonly used emacs keybindings, add something I think useful, for exa
 3. if command is not a path, not in keywords and is a prefix of some keywords, then complete
 4. run user-defined callback
 
-*** change state
-| Escape | if popup exist quit it, or quit kuma                         |
-| C-g    | if popup exist quit it, or unhighlight input's selection     |
-| M-t    | toggle topmost, you may need kuma be in front of some window |
+*** Useful shortcuts (change state)
+| shortcut | effect                                                       |
+|----------+--------------------------------------------------------------|
+| Escape   | if popup exist quit it, or quit kuma                         |
+| C-g      | if popup exist quit it, or unhighlight input's selection     |
+| M-t      | toggle topmost, you may need kuma be in front of some window |
 
 *** input entry movement
 | function                | shortcut    |                 |
@@ -82,14 +84,14 @@ so do other rows popup
 3. short keywords are too hard to remember, I think whole word plus completion is better
 4. think less used applications need not to add to keyword's completions
 
-* Shortages
+** Shortages
 1. First time adding commonly used apps is painful
 2. Only implement exact prefix matching
 
 * Requirement
 1. Pure python implemention, only python3 (with tkinter) is required
 2. For windows user, win32api is required for a faster response\\
-   NOTE: pip install raise ImportError, download exe from the following url:
+   NOTE: pip install raise ImportError, download exe from the following url:\\
    https://sourceforge.net/projects/pywin32/files/pywin32/
 
 * Set startup shortcut
