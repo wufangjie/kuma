@@ -11,6 +11,8 @@ import subprocess
 from base import Data, Message
 
 
+# TODO: add whole window movements shortcut
+
 # TODO: add linux global hotkey
 
 
