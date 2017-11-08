@@ -32,7 +32,7 @@ Implement commonly used emacs keybindings, add something I think useful, for exa
 | C-g      | if popup exist quit it, or unhighlight input's selection     |
 | M-t      | toggle topmost, you may need kuma be in front of some window |
 
-*** input entry movement
+*** input entry movement, editing (continuous kill, continuous undo etc.)
 | function                | shortcut    |                 |
 |-------------------------+-------------+-----------------|
 | forward_char            | C-f         |                 |
