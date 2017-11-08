@@ -11,18 +11,7 @@ import subprocess
 from base import Data, Message
 
 
-
-
-
-# TODO: add global hotkey to implement warm start, change destroy to hide using:
-# windows win32gui.RegisterHotKey
-# # hide
-# root.withdraw()
-# # show
-# root.update()
-# root.deiconify()
-
-
+# TODO: add linux global hotkey
 
 
 # FIXME: if I set the frame's maxwidth != minwidth, then when the completion (say a filename) is too long, after typing enter on it, we will see cursor not in the sight of input entry, because width is shorten and it seems happens after my callback function finished (I use adjust_xview after quit popup, did not work)
@@ -414,7 +403,7 @@ def save_unselect_and_quit(func):
 
 
 class Travel(tk.Frame):
-    def __init__(self, master=None):
+    def __init__(self, master=None, is_hidden=False):
         self.master = master
         super().__init__(master)
         self.pack(fill='x')
@@ -519,6 +508,14 @@ class Travel(tk.Frame):
         self.win_drives = None
         self.win_drive_template = '{}:/'# + os.path.sep
 
+        self._topmost = False
+        self.input.bind('<Alt-t>', self.toggle_topmost)
+
+        self.is_hidden = is_hidden
+        if self.is_hidden:
+            self.master.withdraw()
+        else:
+            self._show()
 
 
     @property
@@ -569,11 +566,14 @@ class Travel(tk.Frame):
             self.unselect()
         return 'break'
 
+    def _destroy(self):
+        self.master.destroy()
+
     def quit(self, event):
         if self.popup.total:
             self.popup.quit()
         else:
-            self.master.destroy()
+            self._destroy()
         return 'break'
 
     def show_message(self, msg):
@@ -779,7 +779,7 @@ class Travel(tk.Frame):
         if ret == 'hold':
             pass
         elif ret == 'destroy':
-            self.master.destroy()
+            self._destroy()
         elif isinstance(ret, Data) and len(ret):
             self.popup.update_data(ret)
         elif isinstance(ret, Message):
@@ -1124,33 +1124,48 @@ class Travel(tk.Frame):
             self.keywords = [kv[0] for kv in self.kv_list]
             self.nkeyword = len(self.keywords)
 
-    def reset(self):
-        """For daemon process?"""
-        pass
-        # self.popup.quit()
-        # self.unselect()
+    def _hide(self):
+        if not self.is_hidden:
+            self.is_hidden = True
 
-        # self.pack(fill='x')
+            self.nkeyword = -1 # should reload
 
-        # self.states = ['']
-        # self.positions = [0]
-        # self.idx = 0
+            self.states = ['']
+            self.positions = [0]
+            self.idx = 0
 
-        # self.kill_ring.clear()
+            # self.kill_ring.clear()
 
-        # self.previous = None
+            self.previous = None
 
-        # self.mark = None
-        # self.selected = False
+            self.mark = None
+            self.unselect()
 
-        # self.input.delete(0, self.pos_end)
-        # self.input.pack_forget()
+            self.input.delete(0, self.pos_end)
+
+            self.popup.quit()
+
+            self.master.withdraw()
+
+    def _show(self):
+        root = self.master
+        root.update()
+        root.deiconify()
+
+        root.lift()
+        root.attributes('-topmost', True)
+        root.attributes('-topmost', False)
+        self._topmost = False
+
+        self.input.focus_set()
+        self.is_hidden = False
+
+    def toggle_topmost(self, event):
+        self._topmost ^= True
+        self.master.attributes('-topmost', self._topmost)
 
 
-
-
-
-if True:#__name__ == '__main__':
+def create_root():
     root = tk.Tk()
     root.title('kuma')
     # 'If you were to go on a trip... where would you like to go?')
@@ -1162,14 +1177,10 @@ if True:#__name__ == '__main__':
     root.minsize(width_min, 1)
     root.resizable(0, 0)
     root.geometry('+{}+{}'.format((width - width_min) // 2, height // 3))
+    return root
 
-    app = Travel(master=root)
 
-    # app.lift()
-    # root.wm_attributes('-topmost', 1)
-    # NOTE: the only reason you keep kuma is comparing with other data,
-    # so I decide keeping kuma topmost
-    # root.call('wm', 'attributes', '.', '-topmost', '1')
-
+if __name__ == '__main__':
+    app = Travel(create_root())
     if _call_by == 'script':
         app.mainloop()

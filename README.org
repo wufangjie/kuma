@@ -32,6 +32,9 @@ if popup exist quit it, or quit kuma
 *** C-g
 if popup exist quit it, or unhighlight input's selection
 
+*** toggle topmost
+M-t, you may need kuma be in front of some window
+
 *** input entry movement
 | function                | shortcut    |                 |
 |-------------------------+-------------+-----------------|
@@ -67,6 +70,7 @@ if popup exist quit it, or unhighlight input's selection
 | end_of_data        | M->      |         |
 | beginning_of_data  | M-<      |         |
 | move_to_golden_row | C-l      |         |
+
 NOTE for move_to_golden_row (recommend):
 #+BEGIN_EXAMPLE
 if a popup has 9 rows:
@@ -89,24 +93,21 @@ Standing on the shoulder of python, I just did a few things, and more testing ar
 * Shortages
 1. First time adding commonly used apps is painful
 2. Only implement exact prefix matching
-They may require a lot of os knowledges?
 
 * Requirement
-Pure python implemention, only python3 (with tkinter) is required
+1. Pure python implemention, only python3 (with tkinter) is required
+2. For windows user, win32api is required for a faster response
+   NOTE: pip install raise ImportError, download exe from the following url:
+   https://sourceforge.net/projects/pywin32/files/pywin32/
 
 * Set startup shortcut
 ** Linux
 Just bind keyboard short cut to command: python3 the_path/kuma/travel.py
+TODO: It may be a bit slow without a ssd, grab_key is too hard to use for me
 
 ** Windows
-1. Change travel.py ->  travel.pyw, unless there will be a console window
-2. Send travel.pyw to desktop shortcut
-3. Right click it, select "Properties"
-4. Select the Shortcuts tabs
-5. Click in the Shortcut key field and press Ctrl + Alt + whatever character
-
-**important**: You may have a 2-3 delay in win10, kill "ApplicationFrameHost.exe" will solve this problem, see:
-https://answers.microsoft.com/en-us/windows/forum/windows_10-desktop/custom-keyboard-shortcuts-slow-to-execute/67afb465-e97f-4264-8ae3-84960b797dd3?page=3&auth=1
+Run travel_windows.py and you can call kuma every time you press your global HOTKEY, (default is Control-;)
+# desktop shortcut way is too slow
 
 * About config.org
 Emacs's org-mode is good at table and rectangle operations, recommend to you\\

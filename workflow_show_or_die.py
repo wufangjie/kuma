@@ -16,9 +16,6 @@ PLATFORM = platform.system() # {Linux Windows Darwin}
 if PLATFORM == 'Windows':
     import win32gui
     import win32com.client
-    # NOTE: pip install win32gui may raise ImportError: No module named win32gui
-    # Download exe from the following url:
-    # https://sourceforge.net/projects/pywin32/files/pywin32/
 elif PLATFORM == 'Linux':
     import gi
     gi.require_version('Wnck', '3.0')
