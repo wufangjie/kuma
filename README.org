@@ -101,7 +101,7 @@ Just bind keyboard short cut to command: python3 the_path/kuma/travel.py\\
 TODO: It may be a bit slow without a ssd, grab_key is too hard to use for me
 
 ** Windows
-Run travel_windows.py and you can call kuma every time you press your global HOTKEY, (default is Control-;)
+Run travel_windows.py and you can call kuma every time you press your global HOTKEY, which defined in travel_windows.py, default is <Control-;>
 # desktop shortcut way is too slow
 
 * About config.org
