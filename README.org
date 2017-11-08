@@ -13,7 +13,6 @@ NOTE: use space to seperate keyword and parameter
 
 ** Emacs keybinding
 Implement commonly used emacs keybindings, add something I think useful, for example C-l.
-
 *** Tab
 1. complete
 2. insert (if only one completion)
@@ -26,14 +25,10 @@ Implement commonly used emacs keybindings, add something I think useful, for exa
 3. if command is not a path, not in keywords and is a prefix of some keywords, then complete
 4. run user-defined callback
 
-*** Escape
-if popup exist quit it, or quit kuma
-
-*** C-g
-if popup exist quit it, or unhighlight input's selection
-
-*** toggle topmost
-M-t, you may need kuma be in front of some window
+*** change state
+| Escape | if popup exist quit it, or quit kuma                         |
+| C-g    | if popup exist quit it, or unhighlight input's selection     |
+| M-t    | toggle topmost, you may need kuma be in front of some window |
 
 *** input entry movement
 | function                | shortcut    |                 |
@@ -87,22 +82,19 @@ so do other rows popup
 3. short keywords are too hard to remember, I think whole word plus completion is better
 4. think less used applications need not to add to keyword's completions
 
-** Cross platform
-Standing on the shoulder of python, I just did a few things, and more testing are waiting for me.
-
 * Shortages
 1. First time adding commonly used apps is painful
 2. Only implement exact prefix matching
 
 * Requirement
 1. Pure python implemention, only python3 (with tkinter) is required
-2. For windows user, win32api is required for a faster response
+2. For windows user, win32api is required for a faster response\\
    NOTE: pip install raise ImportError, download exe from the following url:
    https://sourceforge.net/projects/pywin32/files/pywin32/
 
 * Set startup shortcut
 ** Linux
-Just bind keyboard short cut to command: python3 the_path/kuma/travel.py
+Just bind keyboard short cut to command: python3 the_path/kuma/travel.py\\
 TODO: It may be a bit slow without a ssd, grab_key is too hard to use for me
 
 ** Windows
