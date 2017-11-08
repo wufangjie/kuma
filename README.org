@@ -91,7 +91,8 @@ so do other rows popup
 * Requirement
 1. Pure python implemention, only python3 (with tkinter) is required
 2. For windows user, win32api is required for a faster response\\
-   NOTE: pip install raise ImportError, download exe from the following url:\\
+   NOTE: pip install raise ImportError, download exe from the following url:
+
    https://sourceforge.net/projects/pywin32/files/pywin32/
 
 * Set startup shortcut
