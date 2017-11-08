@@ -1,11 +1,11 @@
 * Features
 ** Usage
 Productivity at your Fingertips:
-1. search the web
-2. run applications
-3. open file with deafult application
-4. eval one line python code (advanced calculator)
-5. your imagination
+1. Search the web
+2. Run applications
+3. Open file with deafult application
+4. Eval one line python code (advanced calculator)
+5. Your imagination
 NOTE: use space to seperate keyword and parameter
 
 ** Tricks
@@ -14,16 +14,16 @@ NOTE: use space to seperate keyword and parameter
 ** Emacs keybinding
 Implement commonly used emacs keybindings, add something I think useful, for example C-l.
 *** Tab
-1. complete
-2. insert (if only one completion)
-3. insert longest common prefix
-4. greedy tail match completion (see travel.py insert_one_greedy function)
+1. Complete
+2. Insert (if only one completion)
+3. Insert longest common prefix
+4. Greedy tail match completion (see travel.py insert_one_greedy function)
 
 *** Enter
-1. run command
-2. select completion
-3. if command is not a path, not in keywords and is a prefix of some keywords, then complete
-4. run user-defined callback
+1. Run command
+2. Select completion
+3. If command is not a path, not in keywords and is a prefix of some keywords, then complete
+4. Run user-defined callback
 
 *** Useful shortcuts (change state)
 | shortcut | effect                                                       |
@@ -80,9 +80,9 @@ so do other rows popup
 
 ** Completion
 1. Keyword completion and path completion
-2. path completion should start with ~/ or /, NOTE: Windows should too
-3. short keywords are too hard to remember, I think whole word plus completion is better
-4. think less used applications need not to add to keyword's completions
+2. Path completion should start with ~/ or /, NOTE: Windows should too
+3. Short keywords are too hard to remember, I think whole word plus completion is better
+4. I think less used applications need not to add to keyword's completions
 
 ** Shortages
 1. First time adding commonly used apps is painful
