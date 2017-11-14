@@ -1,13 +1,8 @@
-from travel import Travel, create_root
+from _travel import create_app
 import ctypes
 from ctypes import wintypes
 import win32con
 # from pprint import pprint
-
-
-class TravelNotDestroy(Travel):
-    def _destroy(self):
-        self._hide()
 
 
 if __name__ == '__main__':
@@ -36,7 +31,7 @@ if __name__ == '__main__':
 
 
     # First time show or not show
-    app = TravelNotDestroy(create_root(), False)
+    app = create_app(is_hidden=False)
 
     try:
         msg = wintypes.MSG()

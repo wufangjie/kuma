@@ -508,7 +508,7 @@ class Travel(tk.Frame):
         self.input.bind('<Escape>', self.quit)
 
         self.win_drives = None
-        self.win_drive_template = '{}:/'# + os.path.sep
+        self.win_drive_template = '{}:/' # + os.path.sep
 
         self._topmost = False
         self.input.bind('<Alt-t>', self.toggle_topmost)
@@ -518,6 +518,11 @@ class Travel(tk.Frame):
             self.master.withdraw()
         else:
             self._show()
+
+        # NOTE: now you can not kill kuma by closing window
+        # Linux's send_event discouraged me deeply,
+        # This is the only way I can think out
+        self.master.protocol('WM_DELETE_WINDOW', self._destroy)
 
 
     @property
@@ -567,9 +572,6 @@ class Travel(tk.Frame):
         elif self.selected:
             self.unselect()
         return 'break'
-
-    def _destroy(self):
-        self.master.destroy()
 
     def quit(self, event):
         if self.popup.total:
@@ -1002,10 +1004,10 @@ class Travel(tk.Frame):
         """Only break continuous kill, not undo"""
         if self.mark is not None:
             pos_cur = self.pos_cur
+            self.selected = True
             if self.mark != pos_cur:
+                self.input.icursor(self.mark)
                 self.mark = pos_cur
-                self.input.icursor(pos_cur)
-                self.selected = True
                 self.select()
                 if self.previous == 'kill':
                     self.previous = 'exchange'
@@ -1126,7 +1128,7 @@ class Travel(tk.Frame):
             self.keywords = [kv[0] for kv in self.kv_list]
             self.nkeyword = len(self.keywords)
 
-    def _hide(self):
+    def _destroy(self):
         if not self.is_hidden:
             self.is_hidden = True
 
@@ -1151,9 +1153,15 @@ class Travel(tk.Frame):
 
     def _show(self):
         root = self.master
+        if (not self.is_hidden) and PLATFORM == 'Linux':
+            # Linux will not lift to topmost sometimes
+            # I can only find withdraw first way to solve it
+            # withdraw after withdraw may influence the initial position
+            root.withdraw()
         root.update()
         root.deiconify()
 
+        # following is not enough in linux
         root.lift()
         root.attributes('-topmost', True)
         root.attributes('-topmost', False)
@@ -1170,7 +1178,7 @@ class Travel(tk.Frame):
 def create_root():
     root = tk.Tk()
     root.title('kuma')
-    # 'If you were to go on a trip... where would you like to go?')
+    # If you were to go on a trip... where would you like to go?
 
     width, height = root.maxsize()
     width_min = width * 5 // 12
@@ -1182,7 +1190,13 @@ def create_root():
     return root
 
 
-if __name__ == '__main__':
-    app = Travel(create_root())
+def create_app(is_hidden=False):
+    return Travel(create_root(), is_hidden)
+
+
+if False:
+    # NOTE: do not run this script manually
+    root = create_root()
+    app = Travel(root)
     if _call_by == 'script':
         app.mainloop()

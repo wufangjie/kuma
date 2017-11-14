@@ -90,19 +90,25 @@ so do other rows popup
 
 * Requirement
 1. Pure python implemention, only python3 (with tkinter) is required
-2. For windows user, win32api is required for a faster response\\
+2. For Linux user, python3-xlib is required, which may be already installed by default
+3. For Windows user, win32api is required for a faster response\\
    NOTE: pip install raise ImportError, download exe from the following url:
 
    https://sourceforge.net/projects/pywin32/files/pywin32/
 
-* Set startup shortcut
+* startup
 ** Linux
-Just bind keyboard short cut to command: python3 the_path/kuma/travel.py\\
-TODO: It may be a bit slow without a ssd, grab_key is too hard to use for me
+I think it's just a piece of cake for the guys who use Linux\\
+For me, xfce4-session-settings -> Application Autostart -> then add command:
+python3 {absolute path}/travel_for_linux.py
 
 ** Windows
 Run travel_for_windows.py and you can call kuma every time you press your global HOTKEY, which defined in travel_for_windows.py, default is <Control-;>
 # desktop shortcut way is too slow
+
+** Async
+If you killed kuma by accident or kuma crashed, you can run travel_async_but_risky.py to restart kuma asynchronously
+NOTE: TODO: FIXME: not for windows yet
 
 * About config.org
 Emacs's org-mode is good at table and rectangle operations, recommend to you\\

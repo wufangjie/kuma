@@ -26,6 +26,8 @@
 | window-manager           | App  |             | Linux         | xfwm4-settings                                                             |
 | window-manager-tweaks    | App  |             | Linux         | xfwm4-tweaks-settings                                                      |
 | keyboard                 | App  |             | Linux         | xfce4-keyboard-settings                                                    |
+| screenshot               | App  |             | Linux         | xfce4-screenshoter                                                         |
+| startup                  | App  |             | Linux         | xfce4-session-settings                                                     |
 | qq                       | App  |             | Windows       | C:\Program Files (x86)\Tencent\QQ\Bin\QQ.exe                               |
 |--------------------------+------+-------------+---------------+----------------------------------------------------------------------------|
 | umount                   | Py   |             | Linux         | display unmountable devices and select to unmount                          |
