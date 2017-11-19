@@ -1,11 +1,29 @@
-from _travel import create_app
+from _travel import Travel, BaseScreen, LazyApp
 import Xlib
-from Xlib import X, XK
+from Xlib import X #, XK
 from Xlib.display import Display
-from Xlib.protocol.event import KeyPress, KeyRelease
+# from Xlib.protocol.event import KeyPress, KeyRelease, ClientMessage
 import time as T
 from threading import Thread
-# from multiprocessing import Process
+import subprocess
+import gi
+gi.require_version('Wnck', '3.0')
+from gi.repository import Wnck
+import re
+
+
+reg_xid = re.compile(r'(0x[0-9a-f]+)')
+
+
+
+# TODO: Wnck seems base on gtk, and xprop tool can get pid (not guaranteed, kuma no), WM_CLASS, _NET_WM_NAME(UTF8_STRING)
+# but I tryed send _NET_ACTIVE_WINDOW, _NET_CLOSE_WINDOW
+# to root or the dest window
+# with display.flush(), display.sync()
+# with mask or not
+# 3 types of data, time stamp use 0 or int current time
+# all the combinations, but the window manager just ignore my client message I think
+
 
 
 def send_event(detail, state, root, display, child=X.NONE,
@@ -22,20 +40,42 @@ def send_event(detail, state, root, display, child=X.NONE,
     pass
 
 
-class LazyApp:
-    def __init__(self):
-        self.app = None
-        self.running = True
 
-    def _show(self):
-        if self.app:
-            self.app._show()
+class LinuxScreen(BaseScreen):
+    """I do not use multi-workspace"""
+    def get_windows(self):
+        temp = subprocess.check_output(
+            'xprop -root _NET_ACTIVE_WINDOW _NET_CLIENT_LIST',
+            shell=True).decode('utf-8').split('\n')
+        try:
+            kuma = eval(reg_xid.findall(temp[0])[0])
+            xids = {eval(xid) for xid in reg_xid.findall(temp[1])}
+            xids.discard(kuma)
+        except Exception as e:
+            return []
 
-    def update(self, app):
-        self.app = app
+        self.current_window = Wnck.Window.get(kuma)
+        ret = []
+        for xid in xids:
+            win = Wnck.Window.get(xid)
+            app = win.get_application().get_name()
+            if app not in {'xfce4-panel', 'xfdesktop'}:
+                ret.append((app, str(win.get_pid()), win.get_name(), win))
+        return ret
+
+    def activate_window(self, hw):
+        """Got warning, but I can not find a better way"""
+        hw.activate(0)
+
+    def close_window(self, hw):
+        hw.close(0)
+
+
 
 
 if __name__ == '__main__':
+    app = LazyApp()
+
     display = Display()
     root = display.screen().root
     root.change_attributes(event_mask=X.KeyPressMask)
@@ -53,9 +93,6 @@ if __name__ == '__main__':
     # # pending_events, next_event,
     # raise Exception
 
-
-
-    app = LazyApp()
 
     def error_handler(*args, **kwargs):
         """I can not find a detailed document about Error Handling"""
@@ -91,7 +128,7 @@ if __name__ == '__main__':
 
     if app.running:
         # single kuma guranteed
-        app.update(create_app(is_hidden=True))
+        app.update(Travel(LinuxScreen(), is_hidden=True))
         app.app.mainloop()
         app.running = False
 
@@ -110,7 +147,41 @@ if __name__ == '__main__':
         raise Exception(
             'Key confliction detected, maybe another kuma is running')
 
-    # send_event(key, mods[0], root)
-    # # XPending, XNextEvent, XWindowEvent
-    # # pending_events, next_event,
-    # raise Exception
+
+
+
+
+
+# xprop -root _NET_CLIENT_LIST _NET_ACTIVE_WINDOW
+
+
+# display = Display()
+# root = display.screen().root
+# win = display.create_resource_object('window', 0x3000021)
+
+
+# mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
+# # # should send to the root
+# # msg = ClientMessage(window=win,
+# #                     client_type=display.intern_atom('_NET_ACTIVE_WINDOW'),#'WM_DELETE_WINDOW'),
+# #                     data=(32, [1, 0, 0, 0, 0])) #int(T.time())
+
+
+# # should send to the root
+# msg = ClientMessage(window=win,
+#                     client_type=display.intern_atom('_NET_CLOSE_WINDOW'),#'WM_DELETE_WINDOW'),
+#                     data=(32, [int(T.time()), 1, 0, 0, 0])) #int(T.time())
+# display.send_event(root, msg)
+# display.flush()
+# display.sync()
+# # display.close()
+
+# display.send_event(root, msg)
+# display.flush()
+# display.sync()
+# # display.close()
+
+
+# for wid in [0x1400004, 0x1400026, 0x1600003, 0x32000ab, 0x5000025, 0xe55fa7, 0xe56b8c, 0x3000021, 0xe5e2d5]:
+#     print(wid)
+#     print(subprocess.check_output('xprop -id {} | grep -E "^(_NET_)?WM_(PID|CLASS|NAME)"'.format(wid), shell=True).decode('utf-8'))
