@@ -12,6 +12,12 @@ class Data:
         data: list of row_data, row_data can be any one of
               (text, type, description), (text, type) or (text,),
               but please keep row_data the same shape, or it may looks ugly
+        init_ipage: popup's page index
+        init_index: popup's row index
+
+        NOTE: The two init_ can help you change (or hold) the position of
+        the highlighted row, ie if your returned value is Data type, then
+        your highlighted row can not be the first one now.
         """
         self.data = data
         self.init_ipage = init_ipage
