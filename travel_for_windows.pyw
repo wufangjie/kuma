@@ -31,19 +31,19 @@ class WindowsScreen(BaseScreen):
                     hWnds.append(hWnd)
 
         hWnds, ret = [], []
+        self.current_window = win32gui.GetActiveWindow()
         win32gui.EnumWindows(valid, 0)
         dct = {p.pid: p for p in psutil.process_iter()}
         for hWnd in hWnds:
-            text = win32gui.GetWindowText(hWnd)
-            if text:
-                tid, pid = win32process.GetWindowThreadProcessId(hWnd)
-                app = dct[pid].name()
-                if app.endswith('.exe'):
-                    app = app[:-4]
-                # win32gui.GetClassName is not good enough
-                ret.append((app, str(pid), text, hWnd))
-
-        self.current_window = win32gui.GetActiveWindow()
+            if hWnd != self.current_window:
+                text = win32gui.GetWindowText(hWnd)
+                if text:
+                    tid, pid = win32process.GetWindowThreadProcessId(hWnd)
+                    app = dct[pid].name()
+                    if app.endswith('.exe'):
+                        app = app[:-4]
+                    # win32gui.GetClassName is not good enough
+                    ret.append((app, str(pid), text, hWnd))
         return ret
 
     def activate_window(self, hWnd):
