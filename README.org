@@ -2,7 +2,7 @@
 ** Usage
 Productivity at your Fingertips:
 1. Search the web
-2. Run applications
+2. Run applications (or activate application window)
 3. Open file with deafult application
 4. Eval one line python code (advanced calculator)
 5. Your imagination
@@ -90,33 +90,39 @@ so do other rows popup
 
 * Requirement
 1. Pure python implemention, only python3 (with tkinter) is required
-2. For Linux user, python3-xlib is required, which may be already installed by default
-3. For Windows user, win32api is required for a faster response\\
+2. psutil (my xubuntu is already installed, though not needed now), windows is needed to get application name
+3. For Linux user, python3-xlib is required, which may be already installed by default
+4. For Windows user, win32api is required for a faster response\\
    NOTE: pip install raise ImportError, download exe from the following url:
 
    https://sourceforge.net/projects/pywin32/files/pywin32/
 
 * startup
 ** Linux
+TODO: I have trouble to make linux working as windows do, it may take a long time
 I think it's just a piece of cake for the guys who use Linux\\
 For me, xfce4-session-settings -> Application Autostart -> then add command:
 python3 {absolute path}/travel_for_linux.py
 
 ** Windows
-Run travel_for_windows.py and you can call kuma every time you press your global HOTKEY, which defined in travel_for_windows.py, default is <Control-;>
+Run travel_for_windows.pyw and you can call kuma every time you press your global HOTKEY, which defined in travel_for_windows.pyw, default is <Control-;>
 # desktop shortcut way is too slow
 
+http://www.intowindows.com/how-to-add-apps-to-startup-in-windows-10/
+
 ** Async
-If you killed kuma by accident or kuma crashed, you can run travel_async_but_risky.py to restart kuma asynchronously
-NOTE: TODO: FIXME: not for windows yet
+If you killed kuma by accident or kuma crashed, you can run travel_async_but_risky.py to restart kuma asynchronously\\
+NOTE: TODO: FIXME: not for windows yet\\
+Maybe the best way is double click file
 
 * About config.org
 Emacs's org-mode is good at table and rectangle operations, recommend to you\\
 config.org's format is strict unless you implement it yourself:
-1. Colmuns must be [Keyword, Type, Description, Platform, Command]
+1. Colmuns must be [Keyword, Type, Description, Pattern, Platform, Command]
 2. "Keyword" must be unique in certain platform
 3. "Type" must in {Web, App, Py}
 4. "Description" do not remove it even if it is empty
+5. "Pattern" better pattern to match window's appname or title than keyword
 6. "Platform" must in {'', Windows, Linux, Darwin} or '{}+{}' form, '' means available on all platforms
 7. "Command": Web command can have at most one params, App command will run as flat shell command + your additional param, Py see following workflow.
 

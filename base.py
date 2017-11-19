@@ -1,5 +1,5 @@
 class Data:
-    def __init__(self, data):
+    def __init__(self, data, init_ipage=0, init_index=0):
         """
         Data for popup's displaying
 
@@ -14,6 +14,8 @@ class Data:
               but please keep row_data the same shape, or it may looks ugly
         """
         self.data = data
+        self.init_ipage = init_ipage
+        self.init_index = init_index
 
     def run(self, app, idx):
         """

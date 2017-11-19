@@ -5,34 +5,28 @@ from functools import wraps
 #from collections import deque
 import tkinter as tk
 import bisect
-#import re
+import re
 import webbrowser
 import subprocess
+from abc import abstractmethod
 from base import Data, Message
+
 
 
 # TODO: add whole window movements shortcut
 
-# TODO: add linux global hotkey
-
-
 # FIXME: if I set the frame's maxwidth != minwidth, then when the completion (say a filename) is too long, after typing enter on it, we will see cursor not in the sight of input entry, because width is shorten and it seems happens after my callback function finished (I use adjust_xview after quit popup, did not work)
-
 
 
 # TODO: more smooth continuous movement (a char)? (when call by script improved a bit)
 
 # TODO: I didn't have a mac, so I can not test all the mac thing, may do those on a virtual machine
 
-# TODO: kill ring
-
-
+# TODO: kill ring?
 # TODO: history and match, not allow repeat?
-# TODO: add deamon process?
 # TODO: add logging?
 # TODO: add app icon?
 # TODO: use scrollbar, bottom page index or top scrollbar-like thing?
-
 
 
 
@@ -44,9 +38,48 @@ from base import Data, Message
 
 
 
+########################################################################
+# global variables
+########################################################################
+try:
+    path = os.path.split(os.path.realpath(__file__))[0]
+except NameError:
+    path = os.getcwd() or os.getenv('PWD')
+
+
+PLATFORM = platform.system() # {Linux Windows Darwin}
+open_command = {'Linux': 'xdg-open',
+                'Windows': {True: 'start', False: 'call'}, # open a dir or not
+                'Darwin': 'open'}
+assert PLATFORM in open_command
 
 
 
+########################################################################
+# color and font
+########################################################################
+input_bg = '#bebebe'
+desc_fg = '#696969' # description
+
+bg = '#d3d3d3'
+fg = '#000000'
+
+hl_bg = '#4682b4'
+hl_fg = '#ffffff'
+
+
+font_main = ('monaco', 20)
+font_desc = ('monaco', 14)
+
+
+# font_main = ('monaco', 16)
+# font_desc = ('monaco', 12)
+
+
+
+########################################################################
+# useful functions
+########################################################################
 def print_event():
     """
     Strike keyboard to print corresponding event
@@ -61,32 +94,6 @@ def print_event():
     fred.mainloop()
 
 
-try:
-    path = os.path.split(os.path.realpath(__file__))[0]
-    _call_by = 'script'
-except NameError:
-    path = os.getcwd() or os.getenv('PWD')
-    _call_by = 'interpreter'
-
-
-# reg_blanks = re.compile(' +')
-# # reg_shell_safe = re.compile(r'([][ \t\n`<>|;!?\'"\(\)*\\&$#\{\}])')
-# # the regular expression may not be well defined
-
-PLATFORM = platform.system() # {Linux Windows Darwin}
-open_command = {'Linux': 'xdg-open',
-                'Windows': 'start',
-                'Darwin': 'open'}
-# NOTE: Windows start command is for opening application and directory, while `call' for opening file
-# TODO: test on Mac
-assert PLATFORM in open_command
-
-
-
-########################################################################
-# global variables, something you can or should modify
-########################################################################
-
 def get_char_type(c):
     """Add your language's word's characters"""
     if 'a' <= c <= 'z' or 'A' <= c <= 'Z' or '0' <= c <= '9':
@@ -94,7 +101,6 @@ def get_char_type(c):
     if 0x4e00 <= ord(c) <= 0x9fa6:
         return 'chinese'
     return None
-
 
 
 def is_inserting(event):
@@ -130,25 +136,6 @@ def is_inserting(event):
     return False
 
 
-input_bg = '#bebebe'
-desc_fg = '#696969'
-
-bg = '#d3d3d3'
-fg = '#000000'
-
-hl_bg = '#4682b4'
-hl_fg = '#ffffff'
-
-
-font_main = ('monaco', 20)
-font_desc = ('monaco', 14)
-
-
-# font_main = ('monaco', 16)
-# font_desc = ('monaco', 12)
-
-
-
 
 class DataComplete(Data):
     def __init__(self, data, _from=0):
@@ -158,6 +145,7 @@ class DataComplete(Data):
     def run(self, app, idx):
         app.insert_one_greedy(self.data[idx][0], self._from)
         app.save_state_if_needed()
+
 
 
 class Row(tk.Frame):
@@ -216,9 +204,6 @@ def movebd(func):
             func(self, *args)
             if pre_ipage != self.ipage:
                 self.update_display()
-                # if self.npage > 1 and pre_ipage == self.npage - 1:
-                #     self.bottom.pack_forget()
-                #     self.bottom.pack(pady=2, ipadx=20)
             if pre_hl_idx != self.hl_idx:
                 self.highlight(pre_hl_idx)
         return 'break'
@@ -239,7 +224,7 @@ class Popup(tk.Frame):
 
         self.data = None
         self.ipage = 0
-        self.npage = 0
+        self.page_1 = 0 # total page - 1
         self.total = 0
         self.hl_idx = 0
         self.packed = [False] * self.maxdisp
@@ -268,9 +253,11 @@ class Popup(tk.Frame):
         pre_hl_idx = self.hl_idx
         self.data = data
         self.total = len(data)
-        self.npage = (self.total - 1) // self.maxdisp + 1
+        self.page_1 = (self.total - 1) // self.maxdisp
         self.pack(fill='x', pady=(2, 0))
-        self.ipage = self.hl_idx = 0
+        self.ipage = max(0, min(data.init_ipage, self.page_1))
+        self.hl_idx = min(data.init_index, self.maxdisp - 1)
+        self.guarantee_not_exceed()
         self.update_display()
         self.highlight(pre_hl_idx)
 
@@ -294,7 +281,7 @@ class Popup(tk.Frame):
 
     @movebd
     def next_page(self, event):
-        if self.ipage < self.npage - 1:
+        if self.ipage < self.page_1:
             self.ipage += 1
             self.guarantee_not_exceed()
 
@@ -310,8 +297,8 @@ class Popup(tk.Frame):
 
     @movebd
     def end_of_data(self, event):
-        if self.ipage < self.npage - 1:
-            self.ipage = self.npage - 1
+        if self.ipage < self.page_1:
+            self.ipage = self.page_1
             self.hl_idx = self.total - 1 - self.ipage * self.maxdisp
 
     @movebd
@@ -338,7 +325,7 @@ class Popup(tk.Frame):
 
     @movebd
     def cycle_page(self, event):
-        if self.ipage < self.npage - 1:
+        if self.ipage < self.page_1:
             self.ipage += 1
             self.guarantee_not_exceed()
         else:
@@ -349,10 +336,23 @@ class Popup(tk.Frame):
         if self.ipage > 0:
             self.ipage -= 1
         else:
-            self.ipage = self.npage - 1
+            self.ipage = self.page_1
             self.guarantee_not_exceed()
 
 
+
+def create_root():
+    root = tk.Tk()
+    root.title('kuma')
+    # If you were to go on a trip... where would you like to go?
+    width, height = root.maxsize()
+    width_min = width * 5 // 12
+    # root.maxsize(width_min, height)
+    root.maxsize(width // 2, height)
+    root.minsize(width_min, 1)
+    root.resizable(0, 0)
+    root.geometry('+{}+{}'.format((width - width_min) // 2, height // 4))
+    return root
 
 
 def move(func):
@@ -402,15 +402,17 @@ def save_unselect_and_quit(func):
     return wrapper
 
 
-
-
 class Travel(tk.Frame):
-    def __init__(self, master=None, is_hidden=False):
-        self.master = master
-        super().__init__(master)
+    def __init__(self, screen, is_hidden=False,
+                 keyword_file='config.org'):
+        self.screen = screen
+        self.master = create_root()
+        super().__init__(self.master)
         self.pack(fill='x')
 
-        self.nkeyword = -1 # -1 means keywords have not been loaded
+        self.keyword_file = os.path.join(path, keyword_file)
+        # use modification time to determine to reload or not
+        self.keyword_mtime = 0
 
         self.states = ['']
         self.positions = [0]
@@ -429,16 +431,40 @@ class Travel(tk.Frame):
         # 2. self.set_mark
         # 3. self.exchange_point_and_mark
 
+        self._topmost = False
+
+
         self.input = tk.Entry(self, borderwidth=1, bg=input_bg,
                               font=font_main, selectbackground=hl_bg,
                               selectforeground=hl_fg,
-                              insertwidth=2, exportselection=0,
-        )
-        # self.input.insert(0, '~/pack')
+                              insertwidth=2, exportselection=0)
         self.input.pack(fill='x', padx=(1, 0))
         self.input.focus_set()
+
+        self.popup = Popup(self)
+
+
+        self.win_drives = None
+        self.win_drive_template = '{}:/' # + os.path.sep
+
+
+        self.is_hidden = is_hidden
+        if self.is_hidden:
+            self.master.withdraw()
+        else:
+            self._show()
+
+        # NOTE: now you can not kill kuma by closing window
+        # Linux's send_event discouraged me deeply,
+        # This is the only way I can think out
+        self.master.protocol('WM_DELETE_WINDOW', self._destroy)
+
+
+        # keybinding
         self.input.bind('<Return>', self.run)
         self.input.bind('<Tab>', self.complete)
+        self.input.bind('<Control-g>', self.keyboard_quit)
+        self.input.bind('<Escape>', self.quit)
 
 
         self.input.bind('<Control-f>', self.forward_char)
@@ -464,25 +490,8 @@ class Travel(tk.Frame):
 
         self.input.bind('<KeyPress>', self.key_press)
         self.input.bind('<Control-t>', self.transpose_chars)
+        self.input.bind('<Alt-t>', self.toggle_topmost)
 
-        #### unbind default keybindings ####
-        # self.input.bind('<Control-c>', self.dummy)
-        # self.input.bind('<Control-v>', self.dummy)
-        # self.input.bind('<Control-h>', self.dummy)
-        for e in self.input.event_info():
-            self.input.event_delete(e)
-        # self.input.event_add('<<NextWord>>', '<Right>')
-        # self.input.event_add('<<PrevWord>>', '<Left>')
-
-        self.input.bind('<Button-1>', self.dummy)
-        self.input.bind('<Button-2>', self.dummy)
-        self.input.bind('<Button-3>', self.dummy)
-        self.input.bind('<B1-Motion>', self.dummy)
-        self.input.bind('<B2-Motion>', self.dummy)
-        self.input.bind('<B3-Motion>', self.dummy)
-
-
-        self.popup = Popup(self)
 
         self.input.bind('<Alt-bracketright>', self.popup.next_page)
         self.input.bind('<Alt-bracketleft>', self.popup.previous_page)
@@ -499,30 +508,24 @@ class Travel(tk.Frame):
                             self.popup.cycle_page_reverse)
 
 
+        # TODO: change following to window motion
         self.input.bind('<Right>', self.popup.next_page)
         self.input.bind('<Left>', self.popup.previous_page)
         self.input.bind('<Down>', self.popup.next_row)
         self.input.bind('<Up>', self.popup.previous_row)
 
-        self.input.bind('<Control-g>', self.keyboard_quit)
-        self.input.bind('<Escape>', self.quit)
 
-        self.win_drives = None
-        self.win_drive_template = '{}:/' # + os.path.sep
+        # unbind default keybindings
+        for e in self.input.event_info():
+            self.input.event_delete(e) # event_add to add
 
-        self._topmost = False
-        self.input.bind('<Alt-t>', self.toggle_topmost)
-
-        self.is_hidden = is_hidden
-        if self.is_hidden:
-            self.master.withdraw()
-        else:
-            self._show()
-
-        # NOTE: now you can not kill kuma by closing window
-        # Linux's send_event discouraged me deeply,
-        # This is the only way I can think out
-        self.master.protocol('WM_DELETE_WINDOW', self._destroy)
+        # disable mouse click
+        self.input.bind('<Button-1>', self.dummy)
+        self.input.bind('<Button-2>', self.dummy)
+        self.input.bind('<Button-3>', self.dummy)
+        self.input.bind('<B1-Motion>', self.dummy)
+        self.input.bind('<B2-Motion>', self.dummy)
+        self.input.bind('<B3-Motion>', self.dummy)
 
 
     @property
@@ -609,7 +612,7 @@ class Travel(tk.Frame):
         self.save_state_if_needed()
 
         if self.popup.total:
-            if previous == 'tab':
+            if previous in {'tab', 'run'}:
                 self.popup.cycle_page(event)
             elif previous == 'insert':
                 if self.popup.total == 1:
@@ -807,23 +810,14 @@ class Travel(tk.Frame):
             is_a_path = True
             cmd = os.path.expanduser(cmd)
         if os.path.isdir(cmd) or os.path.isfile(cmd):
-            # Only open dir or file, I think it's no need to catch exception
+            func = open_command[PLATFORM]
             if PLATFORM == 'Windows':
-                # It's strange that shell=True can not be omitted
-                if os.path.isdir(cmd):
-                    return self._subprocess_popen(['start', cmd], shell=True)
-                    # subprocess.Popen(
-                    #     ['start', cmd], shell=True, start_new_session=True)
-                else:
-                    return self._subprocess_popen(['call', cmd], shell=True)
-                    # subprocess.Popen(
-                    #     ['call', cmd], shell=True, start_new_session=True)
-            else:
+                # It's strange that only shell True is right
                 return self._subprocess_popen(
-                    [open_command[PLATFORM], cmd], shell=False)
-                # subprocess.Popen([open_command[PLATFORM], cmd],
-                #                  start_new_session=True)
-            # return 'destroy'
+                    [func[os.path.isdir(cmd)], cmd], shell=True)
+            else:
+                return self._subprocess_popen([func, cmd], shell=False)
+
         if is_a_path:
             return Message('Invalid path!')
 
@@ -839,7 +833,8 @@ class Travel(tk.Frame):
                 result.append(self.kv_list[i])
                 i += 1
             if not result:
-                return Message('Unknown keyword: {}!'.format(keyword))
+                return self.screen.activate(cmd)
+                # return Message('Unknown keyword: {}!'.format(keyword))
             result.sort(key=lambda x: x[1]) # stable sort
             self.input.delete(0, self.pos_end)
             self.input.insert(0, pre)
@@ -847,12 +842,19 @@ class Travel(tk.Frame):
             return 'hold'
         else:
             params = params[0].strip() if params else ''
-            typ, val = self.kv_dict[keyword]
+            typ, reg, val = self.kv_dict[keyword]
             typ.capitalize()
-            if typ == 'Web':
+            if typ == '~':
+                if keyword == 'activate':
+                    return self.screen.activate(params)
+                elif keyword == 'close':
+                    return self.screen.close(params)
+                else:
+                    return Message(
+                        'Unimplemented built-in keyword: {}!'.format(keyword))
+            elif typ == 'Web':
                 webbrowser.open_new_tab(val.format(params))
                 return 'destroy'
-
                 # # NOTE: choose following ways you like
                 # webbrowser.open('http://www.python.org')
                 # webbrowser.open_new('http://www.python.org')
@@ -861,14 +863,25 @@ class Travel(tk.Frame):
                 # c.open('http://www.python.org')
                 # c.open_new_tab('http://docs.python.org')
             elif typ == 'App':
-                return self._subprocess_popen(val + ' ' + params, shell=True)
-                # p = subprocess.Popen(val + ' ' + params,
-                #                      shell=True, start_new_session=True)
-                # # try:
-                # # except Exception as e:
-                # #     return Message(repr(e))
-                # # else:
-                # return 'destroy'
+                if (params[:5].lower() == 'close'
+                    or params[:4].lower() == 'kill'):
+                    for pattern in [reg, cmd]:
+                        if pattern:
+                            ret = self.screen.close(pattern)
+                            if not instance(ret, Message):
+                                return ret
+                    return ret
+                elif params[:3].lower() == 'new':
+                    return self._subprocess_popen(
+                        '{} {}'.format(val, params[3:]), shell=True)
+
+                for pattern in [reg, cmd]:
+                    if pattern:
+                        ret = self.screen.activate(pattern)
+                        if not isinstance(ret, Message):
+                            return ret
+                return self._subprocess_popen(
+                    '{} {}'.format(val, params), shell=True)
             elif typ == 'Py':
                 dct = {}
                 try:
@@ -1103,17 +1116,19 @@ class Travel(tk.Frame):
         if pos_cur < start or pos_cur > end:
             self.input.xview('insert')
 
-    def load_keywords(self, file='config.org'):
+    def load_keywords(self):
         """
         Lazy load
 
         I use emacs's org-mode table to organize keywords and values,
         (keyword, type, ..., real command)
         """
-        if self.nkeyword == -1:
+        mt = os.path.getmtime(self.keyword_file)
+        if self.keyword_mtime != mt:
+            self.keyword_mtime = mt
             self.kv_list = []
             self.kv_dict = {}
-            with open(os.path.join(path, file)) as f:
+            with open(self.keyword_file, encoding='utf-8') as f:
                 f.readline() # exclude title (the first line)
                 for line in f:
                     temp = line.split('|')[1:-1]
@@ -1121,7 +1136,7 @@ class Travel(tk.Frame):
                         temp = [w.strip() for w in temp]
                         if temp[-2] == '' or PLATFORM in temp[-2]:
                             self.kv_list.append(temp[:3])
-                            self.kv_dict[temp[0]] = (temp[1], temp[-1])
+                            self.kv_dict[temp[0]] = temp[1::2]
             self.kv_list.sort()
             self.kv_list_sorted_by_type = sorted(
                 self.kv_list, key=lambda x: x[1])
@@ -1131,8 +1146,6 @@ class Travel(tk.Frame):
     def _destroy(self):
         if not self.is_hidden:
             self.is_hidden = True
-
-            self.nkeyword = -1 # should reload
 
             self.states = ['']
             self.positions = [0]
@@ -1175,28 +1188,84 @@ class Travel(tk.Frame):
         self.master.attributes('-topmost', self._topmost)
 
 
-def create_root():
-    root = tk.Tk()
-    root.title('kuma')
-    # If you were to go on a trip... where would you like to go?
 
-    width, height = root.maxsize()
-    width_min = width * 5 // 12
-    # root.maxsize(width_min, height)
-    root.maxsize(width // 2, height)
-    root.minsize(width_min, 1)
-    root.resizable(0, 0)
-    root.geometry('+{}+{}'.format((width - width_min) // 2, height // 3))
-    return root
+class BaseScreen:
+    def get_matched_windows(self, pattern):
+        self.exact_match = False
+        poss = self.get_windows()
+        if pattern:
+            ret = [win for win in poss
+                   if pattern in {win[0].lower(), win[2].lower()}]
+            if ret:
+                self.exact_match = True
+                return ret
 
+            pattern = re.compile(pattern, re.IGNORECASE)
+            ret = [win for win in poss if pattern.search(win[0])]
+            if ret:
+                return ret
+            return [win for win in poss if pattern.search(win[2])]
+        else:
+            return poss
 
-def create_app(is_hidden=False):
-    return Travel(create_root(), is_hidden)
+    @abstractmethod
+    def get_windows(self):
+        """Return list of (app_name, pid, title, hw) tuple
+        NOTE: important! RECORD current window
+        """
+        pass
+
+    @abstractmethod
+    def activate_window(self, hw):
+        pass
+
+    @abstractmethod
+    def close_window(self, hw):
+        pass
+
+    def activate(self, pattern):
+        poss = self.get_matched_windows(pattern)
+        if not poss:
+            return Message('No matched application!')
+        elif len(poss) == 1:
+            self.activate_window(poss[0][-1])
+            return 'destroy'
+        else:
+            class DataActivate(Data):
+                def run(slf, app, idx):
+                    self.activate_window(slf.data[idx][-1])
+                    return 'destroy' if len(slf.data) == 1 else 'hold'
+            return DataActivate(sorted(poss))
+
+    def close(self, pattern):
+        poss = self.get_matched_windows(pattern)
+        if not poss:
+            return Message('No matched application to close!')
+        elif self.exact_match or len(poss) == 1:
+            for win in poss:
+                self.close_window(win[-1])
+            return 'destroy'
+        else:
+            class DataClose(Data):
+                def run(slf, app, idx):
+                    try:
+                        # some windows will share a same process
+                        # while I will kill it for some reason
+                        self.activate_window(slf.data[idx][-1])
+                        self.close_window(slf.data[idx][-1])
+                        if len(slf.data) == 1:
+                            return 'destroy'
+                        self.activate_window(self.current_window)
+                    except Exception as e:
+                        pass
+                    slf.data = slf.data[:idx] + slf.data[idx+1:]
+                    slf.init_ipage = app.popup.ipage
+                    slf.init_index = idx
+                    return slf
+            return DataClose(sorted(poss))
+
 
 
 if False:
-    # NOTE: do not run this script manually
-    root = create_root()
-    app = Travel(root)
-    if _call_by == 'script':
-        app.mainloop()
+    app = Travel()
+    root = app.master
