@@ -1233,7 +1233,10 @@ class BaseScreen:
         else:
             class DataActivate(Data):
                 def run(slf, app, idx):
-                    self.activate_window(slf.data[idx][-1])
+                    try:
+                        self.activate_window(slf.data[idx][-1])
+                    except Exception as e:
+                        pass
                     return 'destroy' if len(slf.data) == 1 else 'hold'
             return DataActivate(sorted(poss))
 

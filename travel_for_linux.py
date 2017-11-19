@@ -6,23 +6,16 @@ from Xlib.display import Display
 import time as T
 from threading import Thread
 import subprocess
-import gi
-gi.require_version('Wnck', '3.0')
-from gi.repository import Wnck
 import re
 
 
 reg_xid = re.compile(r'(0x[0-9a-f]+)')
 
-
-
-# TODO: Wnck seems base on gtk, and xprop tool can get pid (not guaranteed, kuma no), WM_CLASS, _NET_WM_NAME(UTF8_STRING)
-# but I tryed send _NET_ACTIVE_WINDOW, _NET_CLOSE_WINDOW
-# to root or the dest window
-# with display.flush(), display.sync()
-# with mask or not
-# 3 types of data, time stamp use 0 or int current time
-# all the combinations, but the window manager just ignore my client message I think
+disp = Display()
+CLASS = disp.intern_atom('WM_CLASS')
+TITLE = disp.intern_atom('_NET_WM_NAME')
+# PID = disp.intern_atom('_NET_WM_PID') # not guaranteed
+# TODO: CLASS may not good enough
 
 
 
@@ -47,6 +40,7 @@ class LinuxScreen(BaseScreen):
         temp = subprocess.check_output(
             'xprop -root _NET_ACTIVE_WINDOW _NET_CLIENT_LIST',
             shell=True).decode('utf-8').split('\n')
+
         try:
             kuma = eval(reg_xid.findall(temp[0])[0])
             xids = {eval(xid) for xid in reg_xid.findall(temp[1])}
@@ -54,22 +48,26 @@ class LinuxScreen(BaseScreen):
         except Exception as e:
             return []
 
-        self.current_window = Wnck.Window.get(kuma)
+        self.current_window = disp.create_resource_object('window', kuma)
         ret = []
         for xid in xids:
-            win = Wnck.Window.get(xid)
-            app = win.get_application().get_name()
-            if app not in {'xfce4-panel', 'xfdesktop'}:
-                ret.append((app, str(win.get_pid()), win.get_name(), win))
+            win = disp.create_resource_object('window', xid)
+            app = win.get_full_property(CLASS, 0).value.split('\x00')[1]
+            if app not in {'Xfce4-panel', 'Xfdesktop'}:
+                title = win.get_full_property(TITLE, 0).value
+                ret.append((app, '', title, win))
         return ret
 
     def activate_window(self, hw):
         """Got warning, but I can not find a better way"""
-        hw.activate(0)
+        hw.raise_window()
+        disp.sync()
 
     def close_window(self, hw):
-        hw.close(0)
-
+        # FIXME: thunar (when kill), synaptic (when start next time) will crush
+        # Or we should use activate, then Alt + F4 to close them
+        hw.destroy()
+        disp.sync()
 
 
 
@@ -131,6 +129,7 @@ if __name__ == '__main__':
         app.update(Travel(LinuxScreen(), is_hidden=True))
         app.app.mainloop()
         app.running = False
+        disp.close()
 
         # # close display can not terminate thread
         # for mod in mods:
@@ -154,11 +153,16 @@ if __name__ == '__main__':
 
 # xprop -root _NET_CLIENT_LIST _NET_ACTIVE_WINDOW
 
+# xprop -id {} | grep -E "^(_NET_)?WM_(PID|CLASS|NAME)"'
+# xprop -id {} _WM_CLASS _NET_WM_NAME
+
 
 # display = Display()
 # root = display.screen().root
-# win = display.create_resource_object('window', 0x3000021)
+# win = display.create_resource_object('window', 0x32000ab)
 
+
+# Send event
 
 # mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
 # # # should send to the root
