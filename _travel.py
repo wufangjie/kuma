@@ -2,7 +2,7 @@ import time
 import os
 import platform
 from functools import wraps
-#from collections import deque
+# from collections import deque
 import tkinter as tk
 import bisect
 import re
@@ -1264,6 +1264,18 @@ class BaseScreen:
                     return slf
             return DataClose(sorted(poss))
 
+
+class LazyApp:
+    def __init__(self):
+        self.app = None
+        self.running = True
+
+    def _show(self):
+        if self.app and self.running:
+            self.app._show()
+
+    def update(self, app):
+        self.app = app
 
 
 if False:
