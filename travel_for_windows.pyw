@@ -55,7 +55,14 @@ class WindowsScreen(BaseScreen):
         # A disabled window cannot receive input from the user
         win32com.client.Dispatch('WScript.Shell').SendKeys('^')#%')
         # must send key, someone says it's a pywin32 bug
-        win32gui.SetForegroundWindow(hWnd)
+
+        style = win32gui.GetWindowLong(hWnd, win32con.GWL_STYLE)
+        if style & win32con.WS_MINIMIZE:
+            win32gui.ShowWindow(hWnd, win32con.SW_RESTORE)
+            # win32gui.SetWindowLong()'s position is negative
+            # win32gui.SetWindowPos() can not get origin position
+        else:
+            win32gui.SetForegroundWindow(hWnd)
         if is_previous_disable:
             win32gui.EnableWindow(hWnd, False)
 
