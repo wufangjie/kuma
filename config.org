@@ -37,7 +37,7 @@
 | system                | App  |             | 系统             | Windows  | control /name Microsoft.System                                  |
 | program-and-feature   | App  |             | 程序和功能       | Windows  | control /name Microsoft.ProgramsAndFeatures                     |
 | service               | App  |             | 服务             | Windows  | services.msc                                                    |
-| setting               | App  |             | 设置             | Windows  | C:\Windows\ImmersiveControlPanel\SystemSettings.exe             |
+| setting               | App  |             | 设置             | Windows  | start ms-settings:                                              |
 | computer-manager      | App  |             | 计算机管理       | Windows  | compmgmt.msc                                                    |
 | register              | App  |             | 注册表编辑器     | Windows  | regedit                                                         |
 | group                 | App  |             | 本地组策略编辑器 | Windows  | gpedit.msc                                                      |

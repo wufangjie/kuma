@@ -11,7 +11,6 @@ import time as T
 
 
 # FIXME: windows call emacs from kuma will not load .emacs
-# FIXME: keyword "setting" only can activate, but not open setting yet
 # The knowledge of window style and exstyle may help a lot
 # https://msdn.microsoft.com/en-us/library/windows/desktop/ff700543(v=vs.85).aspx
 # https://msdn.microsoft.com/en-us/library/windows/desktop/ms632600(v=vs.85).aspx
