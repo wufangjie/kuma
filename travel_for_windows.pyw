@@ -11,11 +11,12 @@ import time as T
 
 
 # FIXME: windows call emacs from kuma will not load .emacs
-# NOTE: kuma can not activate a minimized task manager, maybe it's a win32 api bug
-# I check some other applications with the same STYLE and EXSTYLE, work well
-# And I find run the command works, but it is not elegant
-# So I think if you find kuma can not activate a task manager, just use
-# system's shortcut (win + x t) to activate, or never minimize a task manager
+# NOTE: kuma can not activate a minimized task manager, maybe it's a win32api bug
+# I checked some other applications with the same STYLE and EXSTYLE, work well
+# And I find run the command (try to start a new one) works, but it is not elegant
+# So I think if you find kuma can not activate a task manager,
+# just use system's shortcut (win + x t, or control + shift + esc) to activate,
+# or never minimize a task manager
 
 # The knowledge of window style and exstyle may help a lot
 # https://msdn.microsoft.com/en-us/library/windows/desktop/ff700543(v=vs.85).aspx
