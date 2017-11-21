@@ -33,10 +33,12 @@
 | firefox               | App  |             |                  | Windows  | C:\Program Files\Mozilla Firefox\firefox.exe                    |
 | file-manager          | App  |             |                  | Windows  | start C:/                                                       |
 | task                  | App  |             | taskmgr          | Windows  | C:\Windows\System32\Taskmgr.exe                                 |
-| control               | App  |             | 程序和功能       | Windows  | control                                                         |
+| control               | App  |             | 所有控制面板项   | Windows  | control                                                         |
+| system                | App  |             | 系统             | Windows  | control /name Microsoft.System                                  |
+| program-and-feature   | App  |             | 程序和功能       | Windows  | control /name Microsoft.ProgramsAndFeatures                     |
 | service               | App  |             | 服务             | Windows  | services.msc                                                    |
 | setting               | App  |             | 设置             | Windows  | C:\Windows\ImmersiveControlPanel\SystemSettings.exe             |
-| computer              | App  |             | 计算机管理       | Windows  | compmgmt.msc                                                    |
+| computer-manager      | App  |             | 计算机管理       | Windows  | compmgmt.msc                                                    |
 | register              | App  |             | 注册表编辑器     | Windows  | regedit                                                         |
 | group                 | App  |             | 本地组策略编辑器 | Windows  | gpedit.msc                                                      |
 |-----------------------+------+-------------+------------------+----------+-----------------------------------------------------------------|
