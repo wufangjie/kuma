@@ -865,10 +865,10 @@ class Travel(tk.Frame):
             elif typ == 'App':
                 if (params[:5].lower() == 'close'
                     or params[:4].lower() == 'kill'):
-                    for pattern in [reg, cmd]:
+                    for pattern in [reg, keyword]:
                         if pattern:
                             ret = self.screen.close(pattern)
-                            if not instance(ret, Message):
+                            if not isinstance(ret, Message):
                                 return ret
                     return ret
                 elif params[:3].lower() == 'new':
