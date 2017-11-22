@@ -129,10 +129,10 @@ so do other rows popup
 #+END_EXAMPLE
 
 * About workflow
-You only need to implement a main function which will be called when you press <Enter> after type in the workflow's name.\\
-And the main function's returned value will influence the displaying and the <Enter> callback on it, and then the callback's returned value, and so on.\\
-See base.py and my two simple workflows.\\
-All workflow python file should be 'workflow_{}.py'.format(workflow_name)
+1. You only need to implement a main function which will be called when you press <Enter> after type in the workflow's name.
+2. The main function's returned value will influence the displaying and the <Enter> callback on it, and then the callback's returned value, and so on.
+3. All workflow python file should be 'workflow_{}.py'.format(workflow_name)
+See base.py and my two simple workflows for more details
 
 * About kuma and travel
 From one of the most popular cartoon "One Piece".\\
