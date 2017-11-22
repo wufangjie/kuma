@@ -1,31 +1,53 @@
 from _travel import Travel, BaseScreen, LazyApp
 import ctypes
 from ctypes import wintypes
-import win32gui, win32con
+import win32gui
+import win32con
 import win32com.client
 import win32process
 import win32api
-import psutil
 from threading import Thread
 import time as T
+# import subprocess
+import os
 
 
 # FIXME: windows call emacs from kuma will not load .emacs
-# NOTE: kuma can not activate a minimized task manager, maybe it's a win32api bug
-# I checked some other applications with the same STYLE and EXSTYLE, work well
-# And I find run the command (try to start a new one) works, but it is not elegant
-# So I think if you find kuma can not activate a task manager,
-# just use system's shortcut (win + x t, or control + shift + esc) to activate,
-# or never minimize a task manager
+
+# NOTE: kuma can not activate a minimized task manager or register...
+# It's a UIPI (User Interface Privilege Isolation) problem
+# You can solve it following ways:
+# 1. give kuma the admin privilege
+# 2. (1) set UAC to the lowest level
+#    (2) compile give_me_admin_privilege.cs with .net's csc.exe and give it admin privilege
+#    (3) uncomment subprocess code
+#    NOTE: every time use admin privilege will appear a splash console
+# 3. run the command (try to start a new one) rather activate, but it is only work on the application in config.org
+# 4. just use system's shortcut (win + x t, or control + shift + esc) to activate,
+# 5. never minimize a task manager
 
 # The knowledge of window style and exstyle may help a lot
 # https://msdn.microsoft.com/en-us/library/windows/desktop/ff700543(v=vs.85).aspx
 # https://msdn.microsoft.com/en-us/library/windows/desktop/ms632600(v=vs.85).aspx
 
 
+class GetApplicationName:
+    def __init__(self, hWnd):
+        self.pid = win32process.GetWindowThreadProcessId(hWnd)[1]
+        self.handle = win32api.OpenProcess(0x1000, 0, self.pid)
+
+    def __enter__(self):
+        name = os.path.basename(
+            win32process.GetModuleFileNameEx(self.handle, None))
+        if name.endswith('.exe'):
+            return name[:-4]
+        return name
+
+    def __exit__(self, *args):
+        win32api.CloseHandle(self.handle)
+
 
 class WindowsScreen(BaseScreen):
-    """GetClassName is not good enough, but I have no better idea"""
     def get_windows(self):
         def valid(hWnd, param):
             if (win32gui.IsWindow(hWnd)
@@ -39,23 +61,15 @@ class WindowsScreen(BaseScreen):
         hWnds, ret = [], []
         self.current_window = win32gui.GetActiveWindow()
         win32gui.EnumWindows(valid, 0)
-        dct = {p.pid: p for p in psutil.process_iter()}
         for hWnd in hWnds:
             if hWnd != self.current_window:
                 text = win32gui.GetWindowText(hWnd)
                 if text:
-                    tid, pid = win32process.GetWindowThreadProcessId(hWnd)
-                    app = dct[pid].name()
-                    if app.endswith('.exe'):
-                        app = app[:-4]
-                    # win32gui.GetClassName is not good enough
-                    ret.append((app, str(pid), text, hWnd))
+                    with GetApplicationName(hWnd) as app:
+                        ret.append((app, '', text, hWnd))
         return ret
 
     def activate_window(self, hWnd):
-        """
-        FIXME: this function may not bring window to topmost sometimes
-        """
         is_previous_disable = win32gui.EnableWindow(hWnd, True)
         # see window style WS_DISABLED
         # A disabled window cannot receive input from the user
@@ -64,21 +78,24 @@ class WindowsScreen(BaseScreen):
 
         style = win32gui.GetWindowLong(hWnd, win32con.GWL_STYLE)
         if style & win32con.WS_MINIMIZE:
-            win32gui.ShowWindow(hWnd, win32con.SW_RESTORE)
             # win32gui.SetWindowLong()'s position is negative
             # win32gui.SetWindowPos() can not get origin position
+            if not win32gui.ShowWindow(hWnd, win32con.SW_RESTORE):
+                pass
+                # subprocess.call(
+                #     ['give_me_admin_privilege', str(hWnd), 'restore'],
+                #     shell=True,
+                # )
         else:
             win32gui.SetForegroundWindow(hWnd)
         if is_previous_disable:
             win32gui.EnableWindow(hWnd, False)
 
     def close_window(self, hWnd):
-        """
-        DestroyWindow() can only be called by the thread that created the window
-        """
-        # win32gui.SendMessage(hWnd, win32con.WM_CLOSE)
         # WM_DESTROY did not work
+        # DestroyWindow can only be called by the thread that created the window
         try:
+            # win32gui.SendMessage(hWnd, win32con.WM_CLOSE)
             win32gui.PostMessage(hWnd, win32con.WM_CLOSE)
         except Exception as e:
             pid = win32process.GetWindowThreadProcessId(hWnd)[1]
@@ -144,7 +161,7 @@ if __name__ == '__main__':
 
     # If I do not use multi-thread, then the cursor will not blink
     # Does my implemention have potential errors?
-    # TODO: some error handling may needed,
+    # TODO: some error handlings
 
     # try:
     #     msg = wintypes.MSG()
