@@ -18,6 +18,9 @@ NOTE: use space to seperate keyword and parameter
 3. Short keywords are too hard to remember, I think whole word plus completion is better
 4. I think less used applications need not to add to keyword's completions
 
+** Emacs keybinding and custom workflow
+See the bottom of the README
+
 ** Shortages
 1. First time adding commonly used apps is painful
 2. Only implement exact prefix matching
@@ -47,6 +50,17 @@ http://www.intowindows.com/how-to-add-apps-to-startup-in-windows-10/
 ** Async
 If you killed kuma by accident or kuma crashed, you can run travel_async_but_risky.py to restart kuma asynchronously\\
 NOTE: TODO: FIXME: not for windows yet, double click file may be your best way
+
+* About config.org
+Emacs's org-mode is good at table and rectangle operations, recommend to you\\
+config.org's format is strict unless you implement it yourself:
+0. First Line:    [Keyword, Type, Description, Pattern, Platform, Command]
+1. "Keyword":     must be unique in certain platform
+2. "Type":        must in {Web, App, Py}
+3. "Description": do not remove it even if it is empty
+4. "Pattern":     you can write a regular expression to match window's appname or title better, '' means use keyword instead
+5. "Platform":    must in {'', Windows, Linux, Darwin} or '{}+{}' form, '' means available on all platforms
+6. "Command":     Web command can have at most one params, App command will run as flat shell command + your additional param, Py for humanity
 
 * Emacs keybinding
 ** Tab
@@ -114,21 +128,10 @@ if a popup has 9 rows:
 so do other rows popup
 #+END_EXAMPLE
 
-* About config.org
-Emacs's org-mode is good at table and rectangle operations, recommend to you\\
-config.org's format is strict unless you implement it yourself:
-0. First Line:    [Keyword, Type, Description, Pattern, Platform, Command]
-1. "Keyword":     must be unique in certain platform
-2. "Type":        must in {Web, App, Py}
-3. "Description": do not remove it even if it is empty
-4. "Pattern":     you can write a regular expression to match window's appname or title better, '' means use keyword instead
-5. "Platform":    must in {'', Windows, Linux, Darwin} or '{}+{}' form, '' means available on all platforms
-6. "Command":     Web command can have at most one params, App command will run as flat shell command + your additional param, Py for humanity
-
 * About workflow
 You only need to implement a main function which will be called when you press <Enter> after type in the workflow's name.\\
-And the main function's returned value will influence the displaying and the <Enter> callback on it, and then the callback's returned value...\\
-See base.py and my two simple workflows\\
+And the main function's returned value will influence the displaying and the <Enter> callback on it, and then the callback's returned value, and so on.\\
+See base.py and my two simple workflows.\\
 All workflow python file should be 'workflow_{}.py'.format(workflow_name)
 
 * About kuma and travel
