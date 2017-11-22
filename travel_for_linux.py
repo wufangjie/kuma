@@ -53,9 +53,9 @@ class LinuxScreen(BaseScreen):
         ret = []
         for xid in xids:
             win = disp.create_resource_object('window', xid)
-            app = win.get_full_property(CLASS, 0).value.split('\x00')[1]
+            app = str(win.get_full_property(CLASS, 0).value).split('\x00')[1]
             if app not in {'Xfce4-panel', 'Xfdesktop'}:
-                title = win.get_full_property(TITLE, 0).value
+                title = str(win.get_full_property(TITLE, 0).value)
                 ret.append((app, '', title, win))
         return ret
 
