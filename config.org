@@ -32,7 +32,8 @@
 | emacs                 | App  |             |                  | Windows  | C:\Emacs\bin\runemacs.exe -fs                                   |
 | firefox               | App  |             |                  | Windows  | C:\Program Files\Mozilla Firefox\firefox.exe                    |
 | file-manager          | App  |             |                  | Windows  | start C:/                                                       |
-| task                  | App  |             | taskmgr          | Windows  | C:\Windows\System32\Taskmgr.exe                                 |
+| cmd                   | App  |             | cmd.exe$         | Windows  | start cmd                                                       |
+| task-manager          | App  |             | taskmgr          | Windows  | C:\Windows\System32\Taskmgr.exe                                 |
 | control               | App  |             | 所有控制面板项   | Windows  | control                                                         |
 | system                | App  |             | 系统             | Windows  | control /name Microsoft.System                                  |
 | program-and-feature   | App  |             | 程序和功能       | Windows  | control /name Microsoft.ProgramsAndFeatures                     |
