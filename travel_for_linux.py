@@ -15,12 +15,13 @@ disp = Display()
 CLASS = disp.intern_atom('WM_CLASS')
 TITLE = disp.intern_atom('_NET_WM_NAME')
 # PID = disp.intern_atom('_NET_WM_PID') # not guaranteed
-# TODO: CLASS may not good enough
+# NOTE: As far as I can see, CLASS is good enough
 
 
 
 def send_event(detail, state, root, display, child=X.NONE,
                same_screen=1, root_x=0, root_y=0, event_x=0, event_y=0):
+    """This send event discourage me a lot"""
     # time = int(T.time()) # X.CurrentTime
     # window = root # display.get_input_focus().focus
     # params = locals()
@@ -59,13 +60,13 @@ class LinuxScreen(BaseScreen):
         return ret
 
     def activate_window(self, hw):
-        """Got warning, but I can not find a better way"""
         hw.raise_window()
         disp.sync()
 
     def close_window(self, hw):
-        # FIXME: thunar (when kill), synaptic (when start next time) will crush
-        # Or we should use activate, then Alt + F4 to close them
+        # FIXME: synaptic will crush when start next time,
+        # then you should click to let it disappear, then start again
+        # Or we should use activate, then Alt + F4 to close it
         hw.destroy()
         disp.sync()
 
@@ -78,7 +79,7 @@ if __name__ == '__main__':
     root = display.screen().root
     root.change_attributes(event_mask=X.KeyPressMask)
 
-    # Control + ' (and maybe Caps Lock, Num Lock)
+    # Control + ; (and maybe Caps Lock, Num Lock)
     key = 47
     mods = [0x0004, 0x0006, 0x0014, 0x0016]
 
@@ -149,7 +150,9 @@ if __name__ == '__main__':
 
 
 
-
+################################################################################
+# # abandon
+################################################################################
 
 # xprop -root _NET_CLIENT_LIST _NET_ACTIVE_WINDOW
 
