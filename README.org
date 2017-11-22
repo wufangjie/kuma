@@ -95,13 +95,11 @@ Pure python implemention, python3 (with tkinter) is required
 1. python3-xlib is required, which may have been already installed by default
 2. xprop command line tool, which may have been already installed by default
 
-
 ** Windows
-1. psutil, to get application name, since windows's class name is casual
-2. win32api
-   NOTE: pip install may raise ImportError, please download exe from the following url:
+win32api
+NOTE: pip install may raise ImportError, please download exe from the following url:
 
-   https://sourceforge.net/projects/pywin32/files/pywin32/
+https://sourceforge.net/projects/pywin32/files/pywin32/
 
 * startup
 ** Linux
