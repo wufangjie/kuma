@@ -1,50 +1,52 @@
-| Keyword               | Type | Description | Pattern          | Platform | Command                                                         |
-|-----------------------+------+-------------+------------------+----------+-----------------------------------------------------------------|
-| bing                  | Web  |             |                  |          | https://www.bing.com/search?q={}                                |
-| dict(bing)            | Web  |             |                  |          | https://www.bing.com/dict/search?q={}                           |
-| stackoverflow         | Web  |             |                  |          | https://stackoverflow.com/search?q={}                           |
-| wiki                  | Web  |             |                  |          | https://en.wikipedia.org/wiki/{}                                |
-| douban                | Web  |             |                  |          | https://www.douban.com/search?q={}                              |
-| book(douban)          | Web  |             |                  |          | https://book.douban.com/subject_search?search_text={}&cat=1001  |
-| movie(douban)         | Web  |             |                  |          | https://movie.douban.com/subject_search?search_text={}&cat=1002 |
-| github                | Web  |             |                  |          | https://github.com/search?q={}                                  |
-| jingdong              | Web  |             |                  |          | https://search.jd.com/Search?keyword={}&enc=utf-8               |
-| taobao                | Web  |             |                  |          | https://s.taobao.com/search?q={}                                |
-| zhihu                 | Web  |             |                  |          | https://www.zhihu.com/search?type=content&q={}                  |
-| baidu                 | Web  |             |                  |          | https://www.baidu.com/s?wd={}                                   |
-| pythonlibs            | Web  |             |                  | Windows  | https://www.lfd.uci.edu/~gohlke/pythonlibs/                     |
-|-----------------------+------+-------------+------------------+----------+-----------------------------------------------------------------|
-| emacs                 | App  |             |                  | Linux    | /usr/bin/emacs -fs                                              |
-| firefox               | App  |             |                  | Linux    | firefox                                                         |
-| thunar                | App  |             |                  | Linux    | xdg-open ~/                                                     |
-| terminal              | App  |             |                  | Linux    | xfce4-terminal                                                  |
-| apt                   | App  |             |                  | Linux    | synaptic-pkexec                                                 |
-| steam                 | App  |             |                  | Linux    | /usr/bin/steam                                                  |
-| libreoffice           | App  |             |                  | Linux    | libreoffice                                                     |
-| audio                 | App  |             |                  | Linux    | pavucontrol                                                     |
-| task                  | App  |             |                  | Linux    | xfce4-taskmanager                                               |
-| window-manager        | App  |             |                  | Linux    | xfwm4-settings                                                  |
-| window-manager-tweaks | App  |             |                  | Linux    | xfwm4-tweaks-settings                                           |
-| keyboard              | App  |             |                  | Linux    | xfce4-keyboard-settings                                         |
-| screenshot            | App  |             |                  | Linux    | xfce4-screenshoter                                              |
-| setting               | App  |             |                  | Linux    | xfce4-settings-editor                                           |
-| startup               | App  |             |                  | Linux    | xfce4-session-settings                                          |
-| emacs                 | App  |             |                  | Windows  | C:\Emacs\bin\runemacs.exe -fs                                   |
-| firefox               | App  |             |                  | Windows  | C:\Program Files\Mozilla Firefox\firefox.exe                    |
-| file-manager          | App  |             |                  | Windows  | start C:/                                                       |
-| cmd                   | App  |             | cmd.exe$         | Windows  | start cmd                                                       |
-| task-manager          | App  |             | taskmgr          | Windows  | C:\Windows\System32\Taskmgr.exe                                 |
-| control               | App  |             | 所有控制面板项   | Windows  | control                                                         |
-| system                | App  |             | 系统             | Windows  | control /name Microsoft.System                                  |
-| program-and-feature   | App  |             | 程序和功能       | Windows  | control /name Microsoft.ProgramsAndFeatures                     |
-| service               | App  |             | 服务             | Windows  | services.msc                                                    |
-| setting               | App  |             | 设置             | Windows  | start ms-settings:                                              |
-| computer-manager      | App  |             | 计算机管理       | Windows  | compmgmt.msc                                                    |
-| register              | App  |             | 注册表编辑器     | Windows  | regedit                                                         |
-| group                 | App  |             | 本地组策略编辑器 | Windows  | gpedit.msc                                                      |
-|-----------------------+------+-------------+------------------+----------+-----------------------------------------------------------------|
-| umount                | Py   |             |                  | Linux    | display unmountable devices and select to unmount               |
-| eval                  | Py   |             |                  |          | evaluate one line python code                                   |
-|-----------------------+------+-------------+------------------+----------+-----------------------------------------------------------------|
-| activate              | ~    |             |                  |          |                                                                 |
-| close                 | ~    |             |                  |          |                                                                 |
+| Keyword               | Type | Description | Pattern               | Platform | Command                                                         |
+|-----------------------+------+-------------+-----------------------+----------+-----------------------------------------------------------------|
+| bing                  | Web  |             |                       |          | https://www.bing.com/search?q={}                                |
+| dict(bing)            | Web  |             |                       |          | https://www.bing.com/dict/search?q={}                           |
+| stackoverflow         | Web  |             |                       |          | https://stackoverflow.com/search?q={}                           |
+| wiki                  | Web  |             |                       |          | https://en.wikipedia.org/wiki/{}                                |
+| douban                | Web  |             |                       |          | https://www.douban.com/search?q={}                              |
+| book(douban)          | Web  |             |                       |          | https://book.douban.com/subject_search?search_text={}&cat=1001  |
+| movie(douban)         | Web  |             |                       |          | https://movie.douban.com/subject_search?search_text={}&cat=1002 |
+| github                | Web  |             |                       |          | https://github.com/search?q={}                                  |
+| jingdong              | Web  |             |                       |          | https://search.jd.com/Search?keyword={}&enc=utf-8               |
+| taobao                | Web  |             |                       |          | https://s.taobao.com/search?q={}                                |
+| zhihu                 | Web  |             |                       |          | https://www.zhihu.com/search?type=content&q={}                  |
+| baidu                 | Web  |             |                       |          | https://www.baidu.com/s?wd={}                                   |
+| pythonlibs            | Web  |             |                       | Windows  | https://www.lfd.uci.edu/~gohlke/pythonlibs/                     |
+|-----------------------+------+-------------+-----------------------+----------+-----------------------------------------------------------------|
+| emacs                 | App  |             |                       | Linux    | /usr/bin/emacs -fs                                              |
+| firefox               | App  |             |                       | Linux    | firefox                                                         |
+| file-manager          | App  |             | thunar                | Linux    | xdg-open ~/                                                     |
+| terminal              | App  |             |                       | Linux    | xfce4-terminal                                                  |
+| apt                   | App  |             | synaptic              | Linux    | synaptic-pkexec                                                 |
+| steam                 | App  |             |                       | Linux    | /usr/bin/steam                                                  |
+| libreoffice           | App  |             |                       | Linux    | libreoffice                                                     |
+| audio                 | App  |             | pavucontrol           | Linux    | pavucontrol                                                     |
+| task-manager          | App  |             | xfce4-taskmanager     | Linux    | xfce4-taskmanager                                               |
+| window-manager        | App  |             | xfwm4-settings        | Linux    | xfwm4-settings                                                  |
+| window-manager-tweaks | App  |             | xfwm4-tweaks-settings | Linux    | xfwm4-tweaks-settings                                           |
+| keyboard              | App  |             |                       | Linux    | xfce4-keyboard-settings                                         |
+| screenshot            | App  |             |                       | Linux    | xfce4-screenshoter                                              |
+| setting               | App  |             |                       | Linux    | xfce4-settings-editor                                           |
+| startup               | App  |             |                       | Linux    | xfce4-session-settings                                          |
+| desktop               | App  |             |                       | Linux    | xfdesktop-settings                                              |
+|-----------------------+------+-------------+-----------------------+----------+-----------------------------------------------------------------|
+| emacs                 | App  |             |                       | Windows  | C:\Emacs\bin\runemacs.exe -fs                                   |
+| firefox               | App  |             |                       | Windows  | C:\Program Files\Mozilla Firefox\firefox.exe                    |
+| file-manager          | App  |             |                       | Windows  | start C:/                                                       |
+| cmd                   | App  |             | cmd.exe$              | Windows  | start cmd                                                       |
+| task-manager          | App  |             | taskmgr               | Windows  | C:\Windows\System32\Taskmgr.exe                                 |
+| control               | App  |             | 所有控制面板项        | Windows  | control                                                         |
+| system                | App  |             | 系统                  | Windows  | control /name Microsoft.System                                  |
+| program-and-feature   | App  |             | 程序和功能            | Windows  | control /name Microsoft.ProgramsAndFeatures                     |
+| service               | App  |             | 服务                  | Windows  | services.msc                                                    |
+| setting               | App  |             | 设置                  | Windows  | start ms-settings:                                              |
+| computer-manager      | App  |             | 计算机管理            | Windows  | compmgmt.msc                                                    |
+| register              | App  |             | 注册表编辑器          | Windows  | regedit                                                         |
+| group                 | App  |             | 本地组策略编辑器      | Windows  | gpedit.msc                                                      |
+|-----------------------+------+-------------+-----------------------+----------+-----------------------------------------------------------------|
+| umount                | Py   |             |                       | Linux    | display unmountable devices and select to unmount               |
+| eval                  | Py   |             |                       |          | evaluate one line python code                                   |
+|-----------------------+------+-------------+-----------------------+----------+-----------------------------------------------------------------|
+| activate              | ~    |             |                       |          |                                                                 |
+| close                 | ~    |             |                       |          |                                                                 |
