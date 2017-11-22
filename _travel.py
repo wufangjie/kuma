@@ -768,17 +768,20 @@ class Travel(tk.Frame):
                 self.unselect()
             self.previous = 'insert'
             if self.popup.total:
-                result = []
-                _from = self.popup.data._from
-                for row in self.popup.data:
-                    if row[0][_from:_from+1] == event.char:
-                        result.append(row)
-                if not result:
-                    self.popup.quit()
-                elif len(result) == len(self.popup.data):
-                    self.popup.data._from += 1
+                if isinstance(self.popup.data, DataComplete):
+                    result = []
+                    _from = self.popup.data._from
+                    for row in self.popup.data:
+                        if row[0][_from:_from+1] == event.char:
+                            result.append(row)
+                    if not result:
+                        self.popup.quit()
+                    elif len(result) == len(self.popup.data):
+                        self.popup.data._from += 1
+                    else:
+                        self.popup.update_data(DataComplete(result, _from + 1))
                 else:
-                    self.popup.update_data(DataComplete(result, _from + 1))
+                    self.popup.quit()
 
     def run(self, event):
         ret = self._run(event)
