@@ -33,15 +33,19 @@ import os
 
 class GetApplicationName:
     def __init__(self, hWnd):
-        self.pid = win32process.GetWindowThreadProcessId(hWnd)[1]
-        self.handle = win32api.OpenProcess(0x1000, 0, self.pid)
+        self.hWnd = hWnd
 
     def __enter__(self):
-        name = os.path.basename(
-            win32process.GetModuleFileNameEx(self.handle, None))
-        if name.endswith('.exe'):
-            return name[:-4]
-        return name
+        try:
+            pid = win32process.GetWindowThreadProcessId(self.hWnd)[1]
+            handle = win32api.OpenProcess(0x1000, 0, pid)
+            name = os.path.basename(
+                win32process.GetModuleFileNameEx(handle, None))
+            if name.endswith('.exe'):
+                return name[:-4]
+            return name
+        except Exception as e:
+            return None
 
     def __exit__(self, *args):
         win32api.CloseHandle(self.handle)
@@ -66,7 +70,8 @@ class WindowsScreen(BaseScreen):
                 text = win32gui.GetWindowText(hWnd)
                 if text:
                     with GetApplicationName(hWnd) as app:
-                        ret.append((app, '', text, hWnd))
+                        if app:
+                            ret.append((app, '', text, hWnd))
         return ret
 
     def activate_window(self, hWnd):

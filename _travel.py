@@ -1226,20 +1226,29 @@ class BaseScreen:
     def close_window(self, hw):
         pass
 
+    def activate_window_safely(self, hw):
+        try:
+            self.activate_window(hw)
+        except Exception as e:
+            pass
+
+    def close_window_safely(self, hw):
+        try:
+            self.close_window(hw)
+        except Exception as e:
+            pass
+
     def activate(self, pattern):
         poss = self.get_matched_windows(pattern)
         if not poss:
             return Message('No matched application!')
         elif len(poss) == 1:
-            self.activate_window(poss[0][-1])
+            self.activate_window_safely(poss[0][-1])
             return 'destroy'
         else:
             class DataActivate(Data):
                 def run(slf, app, idx):
-                    try:
-                        self.activate_window(slf.data[idx][-1])
-                    except Exception as e:
-                        pass
+                    self.activate_window_safely(slf.data[idx][-1])
                     return 'destroy' if len(slf.data) == 1 else 'hold'
             return DataActivate(sorted(poss))
 
@@ -1249,21 +1258,21 @@ class BaseScreen:
             return Message('No matched application to close!')
         elif self.exact_match or len(poss) == 1:
             for win in poss:
-                self.close_window(win[-1])
+                self.close_window_safely(win[-1])
             return 'destroy'
         else:
             class DataClose(Data):
                 def run(slf, app, idx):
+                    self.activate_window_safely(slf.data[idx][-1])
                     try:
-                        # some windows will share a same process
-                        # while I will kill it for some reason
-                        self.activate_window(slf.data[idx][-1])
                         self.close_window(slf.data[idx][-1])
-                        if len(slf.data) == 1:
-                            return 'destroy'
-                        self.activate_window(self.current_window)
                     except Exception as e:
                         pass
+                    else:
+                        self.activate_window_safely(self.current_window)
+
+                    if len(slf.data) == 1:
+                            return 'destroy'
                     slf.data = slf.data[:idx] + slf.data[idx+1:]
                     slf.init_ipage = app.popup.ipage
                     slf.init_index = idx
@@ -1282,6 +1291,7 @@ class LazyApp:
 
     def update(self, app):
         self.app = app
+
 
 
 if False:

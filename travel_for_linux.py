@@ -46,17 +46,20 @@ class LinuxScreen(BaseScreen):
             kuma = eval(reg_xid.findall(temp[0])[0])
             xids = {eval(xid) for xid in reg_xid.findall(temp[1])}
             xids.discard(kuma)
+            self.current_window = disp.create_resource_object('window', kuma)
         except Exception as e:
             return []
 
-        self.current_window = disp.create_resource_object('window', kuma)
         ret = []
         for xid in xids:
-            win = disp.create_resource_object('window', xid)
-            app = str(win.get_full_property(CLASS, 0).value).split('\x00')[1]
-            if app not in {'Xfce4-panel', 'Xfdesktop'}:
-                title = str(win.get_full_property(TITLE, 0).value)
-                ret.append((app, '', title, win))
+            try:
+                win = disp.create_resource_object('window', xid)
+                app = str(win.get_full_property(CLASS, 0).value).split('\x00')
+                if app[1] not in {'Xfce4-panel', 'Xfdesktop'}:
+                    title = str(win.get_full_property(TITLE, 0).value)
+                    ret.append((app[1], '', title, win))
+            except Exception as e:
+                pass
         return ret
 
     def activate_window(self, hw):
