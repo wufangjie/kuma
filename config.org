@@ -16,9 +16,11 @@
 |-----------------------+------+-------------+-----------------------+----------+-----------------------------------------------------------------|
 | emacs                 | App  |             |                       | Linux    | /usr/bin/emacs -fs                                              |
 | firefox               | App  |             |                       | Linux    | firefox                                                         |
-| file-manager          | App  |             | thunar                | Linux    | xdg-open ~/                                                     |
+| file-manager          | App  |             |                       | Linux    | xdg-open ~/                                                     |
+| thunar                | App  |             |                       | Linux    | xdg-open ~/                                                     |
 | terminal              | App  |             |                       | Linux    | xfce4-terminal                                                  |
 | apt                   | App  |             | synaptic              | Linux    | synaptic-pkexec                                                 |
+| synaptic              | App  |             | synaptic              | Linux    | synaptic-pkexec                                                 |
 | steam                 | App  |             |                       | Linux    | /usr/bin/steam                                                  |
 | libreoffice           | App  |             |                       | Linux    | libreoffice                                                     |
 | audio                 | App  |             | pavucontrol           | Linux    | pavucontrol                                                     |
