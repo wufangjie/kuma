@@ -3,6 +3,12 @@ import platform
 import subprocess
 
 
+try:
+    path = os.path.split(os.path.realpath(__file__))[0]
+except NameError:
+    path = os.getcwd() or os.getenv('PWD')
+
+
 if __name__ == '__main__':
 
     """
@@ -16,29 +22,22 @@ if __name__ == '__main__':
     # rather than running another python script works finely
 
 
-    PLATFORM = platform.system() # {Linux Windows Darwin}
+    PLATFORM = platform.system()
 
-    try:
-        path = os.path.split(os.path.realpath(__file__))[0]
-    except NameError:
-        path = os.getcwd() or os.getenv('PWD')
-
-    filename = os.path.join(path, 'travel_for_{}.py'.format(PLATFORM.lower()))
-
+    if PLATFORM == 'Windows':
+        py, filename = ['python',  'travel_for_windows.py']
+    elif PLATFORM == 'Linux':
+        py, filename = ['python3', 'travel_for_linux.py']
+    elif PLATFORM == 'Darwin':
+        py, filename = ['python3', 'travel_for_mac.py']
+    else:
+        raise Exception('Unknown platform!')
 
     p = subprocess.Popen(
-        ('python ' if PLATFORM == 'Windows' else 'python3 ') + filename,
-        #['python' if PLATFORM == 'Windows' else 'python3', filename],
+        py + ' ' + os.path.join(path, filename),
         shell=True, start_new_session=True,
         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
         stderr=subprocess.PIPE, universal_newlines=True)
-
-    try:
-        _, err = p.communicate(timeout=1)
-    except subprocess.TimeoutExpired:
-        pass
-    else:
-        print(err)
 
     if PLATFORM == 'Linux':
         subprocess.call(['kill', str(p.pid)]) # kill sh -c ... process
