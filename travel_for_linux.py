@@ -1,3 +1,6 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
 from _travel import Travel, BaseScreen, LazyApp
 import Xlib
 from Xlib import X #, XK
