@@ -34,13 +34,14 @@ import os
 class GetApplicationName:
     def __init__(self, hWnd):
         self.hWnd = hWnd
+        self.handle = 0
 
     def __enter__(self):
         try:
             pid = win32process.GetWindowThreadProcessId(self.hWnd)[1]
-            handle = win32api.OpenProcess(0x1000, 0, pid)
+            self.handle = win32api.OpenProcess(0x1000, 0, pid)
             name = os.path.basename(
-                win32process.GetModuleFileNameEx(handle, None))
+                win32process.GetModuleFileNameEx(self.handle, None))
             if name.endswith('.exe'):
                 return name[:-4]
             return name
@@ -48,7 +49,8 @@ class GetApplicationName:
             return None
 
     def __exit__(self, *args):
-        win32api.CloseHandle(self.handle)
+        if self.handle:
+            win32api.CloseHandle(self.handle)
 
 
 class WindowsScreen(BaseScreen):
