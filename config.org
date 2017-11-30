@@ -16,7 +16,6 @@
 |-----------------------+------+-------------+-----------------------+----------+-----------------------------------------------------------------|
 | emacs                 | App  |             |                       | Linux    | /usr/bin/emacs -fs                                              |
 | firefox               | App  |             |                       | Linux    | firefox                                                         |
-| file-manager          | App  |             |                       | Linux    | xdg-open ~/                                                     |
 | thunar                | App  |             |                       | Linux    | xdg-open ~/                                                     |
 | terminal              | App  |             |                       | Linux    | xfce4-terminal                                                  |
 | apt                   | App  |             | synaptic              | Linux    | synaptic-pkexec                                                 |
@@ -28,12 +27,12 @@
 | window-manager        | App  |             | xfwm4-settings        | Linux    | xfwm4-settings                                                  |
 | window-manager-tweaks | App  |             | xfwm4-tweaks-settings | Linux    | xfwm4-tweaks-settings                                           |
 | keyboard              | App  |             |                       | Linux    | xfce4-keyboard-settings                                         |
-| screenshot            | App  |             |                       | Linux    | xfce4-screenshoter                                              |
+| screenshot            | App  |             |                       | Linux    | xfce4-screenshooter                                             |
 | setting               | App  |             |                       | Linux    | xfce4-settings-editor                                           |
 | startup               | App  |             |                       | Linux    | xfce4-session-settings                                          |
 | desktop               | App  |             |                       | Linux    | xfdesktop-settings                                              |
 |-----------------------+------+-------------+-----------------------+----------+-----------------------------------------------------------------|
-| emacs                 | App  |             |                       | Windows  | C:\Emacs\bin\runemacs.exe -fs                                   |
+| emacs                 | App  |             |                       | Windows  | C:\Emacs\bin\runemacs.exe -fs --load C:\Emacs\.emacs            |
 | firefox               | App  |             |                       | Windows  | C:\Program Files\Mozilla Firefox\firefox.exe                    |
 | file-manager          | App  |             |                       | Windows  | start C:/                                                       |
 | cmd                   | App  |             | cmd.exe$              | Windows  | start cmd                                                       |
