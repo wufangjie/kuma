@@ -804,7 +804,7 @@ class Travel(tk.Frame):
 
         cmd = self.input.get().rstrip(' ')
         if not cmd:
-            return 'hold'
+            return self.screen.activate('') # 'hold'
 
         is_a_path = cmd[0] == '/'
         if PLATFORM == 'Windows' and cmd[0] == '/':
