@@ -12,7 +12,7 @@
 | taobao                | Web  |             |                       |          | https://s.taobao.com/search?q={}                                |
 | zhihu                 | Web  |             |                       |          | https://www.zhihu.com/search?type=content&q={}                  |
 | baidu                 | Web  |             |                       |          | https://www.baidu.com/s?wd={}                                   |
-| pythonlibs            | Web  |             |                       | Windows  | https://www.lfd.uci.edu/~gohlke/pythonlibs/                     |
+| pythonlibs            | Web  |             |                       |          | https://www.lfd.uci.edu/~gohlke/pythonlibs/                     |
 |-----------------------+------+-------------+-----------------------+----------+-----------------------------------------------------------------|
 | emacs                 | App  |             |                       | Linux    | /usr/bin/emacs -fs                                              |
 | firefox               | App  |             |                       | Linux    | firefox                                                         |
