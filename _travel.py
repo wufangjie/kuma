@@ -13,8 +13,6 @@ from base import Data, Message
 
 
 
-# TODO: add whole window movements shortcut
-
 # FIXME: if I set the frame's maxwidth != minwidth, then when the completion (say a filename) is too long, after typing enter on it, we will see cursor not in the sight of input entry, because width is shorten and it seems happens after my callback function finished (I use adjust_xview after quit popup, did not work)
 
 
