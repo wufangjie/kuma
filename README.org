@@ -1,3 +1,7 @@
+#+AUTHOR: wfj
+#+EMAIL: wufangjie1223@126.com
+#+HTML_HEAD_EXTRA: <style type="text/css"> body {padding-left: 21%;} #table-of-contents {position: fixed; width: 20%; height: 100%; top: 0; left: 0; overflow-x: hidden; overflow-y: scroll;} </style>
+#+OPTIONS: ^:{} \n:t email:t
 * Features
 ** Usage
 1. Search the web
@@ -39,7 +43,7 @@ https://sourceforge.net/projects/pywin32/files/pywin32/
 
 * Startup
 ** Linux
-I think it's just a piece of cake for linux guys\\
+I think it's just a piece of cake for linux guys
 For me, xfce4-session-settings -> Application Autostart -> then add command: python3 {absolute path}/travel_for_linux.py
 
 ** Windows
@@ -48,11 +52,11 @@ Run travel_for_windows.pyw and then you can call kuma every time you press your 
 http://www.intowindows.com/how-to-add-apps-to-startup-in-windows-10/
 
 ** Async
-If you killed kuma by accident or kuma crashed, you can run travel_async_but_risky.py to restart kuma asynchronously\\
+If you killed kuma by accident or kuma crashed, you can run travel_async_but_risky.py to restart kuma asynchronously
 NOTE: TODO: FIXME: not for windows yet, double click file may be your best way
 
 * About config.org
-Emacs's org-mode is good at table and rectangle operations, recommend to you\\
+Emacs's org-mode is good at table and rectangle operations, recommend to you
 config.org's format is strict unless you implement it yourself:
 0. First Line:    [Keyword, Type, Description, Pattern, Platform, Command]
 1. "Keyword":     must be unique in certain platform
@@ -108,15 +112,21 @@ config.org's format is strict unless you implement it yourself:
 | transpose_chars         | C-t         |                 |
 
 ** popup data movement
-| function           | shortcut |         |
-|--------------------+----------+---------|
-| next_page          | M-]      | <Right> |
-| previous_page      | M-[      | <Left>  |
-| next_row           | C-n      | <Down>  |
-| previous_row       | C-p      | <Up>    |
-| end_of_data        | M->      |         |
-| beginning_of_data  | M-<      |         |
-| move_to_golden_row | C-l      |         |
+| function           | shortcut |
+|--------------------+----------+
+| next_page          | M-]      |
+| previous_page      | M-[      |
+| next_row           | C-n      |
+| previous_row       | C-p      |
+| end_of_data        | M->      |
+| beginning_of_data  | M-<      |
+| move_to_golden_row | C-l      |
+
+** window movement (24 pixels per press)
+| <Right> |
+| <Left>  |
+| <Down>  |
+| <Up>    |
 
 ** Control-l (move_to_golden_row)
 #+BEGIN_EXAMPLE
@@ -135,5 +145,5 @@ so do other rows popup
 See base.py and my two simple workflows for more details
 
 * About kuma and travel
-From one of the most popular cartoon "One Piece".\\
+From one of the most popular cartoon "One Piece".
 Bartholomew Kuma, whose Devil Fruit ability can send people to every place easily, just like the thing I want my script do.
