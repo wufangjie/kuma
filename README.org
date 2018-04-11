@@ -37,6 +37,7 @@ Pure python implemention, python3 (with tkinter) is required
 
 ** Windows
 win32api
+
 NOTE: pip install may raise ImportError, please download exe from the following url:
 
 https://sourceforge.net/projects/pywin32/files/pywin32/
@@ -44,6 +45,7 @@ https://sourceforge.net/projects/pywin32/files/pywin32/
 * Startup
 ** Linux
 I think it's just a piece of cake for linux guys
+
 For me, xfce4-session-settings -> Application Autostart -> then add command: python3 {absolute path}/travel_for_linux.py
 
 ** Windows
@@ -57,6 +59,7 @@ NOTE: TODO: FIXME: not for windows yet, double click file may be your best way
 
 * About config.org
 Emacs's org-mode is good at table and rectangle operations, recommend to you
+
 config.org's format is strict unless you implement it yourself:
 0. First Line:    [Keyword, Type, Description, Pattern, Platform, Command]
 1. "Keyword":     must be unique in certain platform
@@ -146,4 +149,5 @@ See base.py and my two simple workflows for more details
 
 * About kuma and travel
 From one of the most popular cartoon "One Piece".
+
 Bartholomew Kuma, whose Devil Fruit ability can send people to every place easily, just like the thing I want my script do.
