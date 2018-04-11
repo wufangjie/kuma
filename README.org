@@ -6,7 +6,7 @@
 ** Usage
 1. Search the web
 2. Run applications (or activate/close application window)
-3. Open file with deafult application
+3. Open file with default application
 4. Eval one line python code (advanced calculator)
 5. Your imagination
 NOTE: use space to seperate keyword and parameter
@@ -14,16 +14,16 @@ NOTE: use space to seperate keyword and parameter
 ** Tricks
 1. Space is not supposed to occur in keyword, indeed I use it to recognize keyword, but you can use it for completion (for commonly used command)
 2. You can use "keyword new" to force kuma open a new application (if the command do) rather activate some window, "close" or "kill" to close
-3. When the popup have too many rows (> 2), try to press <Control-l>, see emacs keybinding for detail
+3. When the popup have too many rows (> 2), try to press <Control-l>, see section "Emacs keybinding" below for detail
 
 ** Completion
 1. Keyword completion and path completion
-2. Path completion should start with ~/ or /, NOTE: Windows should too
-3. Short keywords are too hard to remember, I think whole word plus completion is better
-4. I think less used applications need not to add to keyword's completions
+2. Path completion should start with ~/ or /, NOTE: Windows should do it too
+3. Short keywords are too hard to remember, I think the whole word plus completion is better
+4. I think less used applications need not to be added to keyword's completions
 
 ** Emacs keybinding and custom workflow
-See the bottom of the README
+See below
 
 ** Shortages
 1. First time adding commonly used apps is painful
@@ -67,7 +67,7 @@ config.org's format is strict unless you implement it yourself:
 3. "Description": do not remove it even if it is empty
 4. "Pattern":     you can write a regular expression to match window's appname or title better, '' means use keyword instead
 5. "Platform":    must in {'', Windows, Linux, Darwin} or '{}+{}' form, '' means available on all platforms
-6. "Command":     Web command can have at most one params, App command will run as flat shell command + your additional param, Py for humanity
+6. "Command":     Web command can have at most one parameter, App command will run as flat shell command + your additional parameter, Py for humanity
 
 * Emacs keybinding
 ** Tab
@@ -135,10 +135,11 @@ config.org's format is strict unless you implement it yourself:
 #+BEGIN_EXAMPLE
 if a popup has 9 rows:
     if the highlighted row in the upper half:
-        then jump to line 7 will let you go to any row within 3 keystokes
+        then jump to line 7 (change with the number of rows)
+	# NOTE: this will let you go to any row within 3 keystrokes
     else:
         jump to line 3
-so do other rows popup
+so do other popup with different number of rows
 #+END_EXAMPLE
 
 * About workflow
@@ -150,4 +151,4 @@ See base.py and my two simple workflows for more details
 * About kuma and travel
 From one of the most popular cartoon "One Piece".
 
-Bartholomew Kuma, whose Devil Fruit ability can send people to every place easily, just like the thing I want my script do.
+Bartholomew Kuma, whose Devil Fruit ability can send people to any place easily, just like the thing I want my script do.
