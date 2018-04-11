@@ -1,7 +1,7 @@
 import time
 import os
 import platform
-from functools import wraps
+from functools import wraps, partial
 # from collections import deque
 import tkinter as tk
 import bisect
@@ -68,12 +68,12 @@ hl_bg = '#4682b4'
 hl_fg = '#ffffff'
 
 
-font_main = ('monaco', 20)
-font_desc = ('monaco', 14)
+# font_main = ('monaco', 20)
+# font_desc = ('monaco', 14)
 
+font_main = ('YouYuan', 28)
+font_desc = ('YouYuan', 20)
 
-# font_main = ('monaco', 16)
-# font_desc = ('monaco', 12)
 
 
 
@@ -508,12 +508,16 @@ class Travel(tk.Frame):
                             self.popup.cycle_page_reverse)
 
 
-        # TODO: change following to window motion
-        self.input.bind('<Right>', self.popup.next_page)
-        self.input.bind('<Left>', self.popup.previous_page)
-        self.input.bind('<Down>', self.popup.next_row)
-        self.input.bind('<Up>', self.popup.previous_row)
+        # # NOTE: change following to window motion
+        # self.input.bind('<Right>', self.popup.next_page)
+        # self.input.bind('<Left>', self.popup.previous_page)
+        # self.input.bind('<Down>', self.popup.next_row)
+        # self.input.bind('<Up>', self.popup.previous_row)
 
+        self.input.bind('<Right>', partial(self.reset_window_position, dx=24))
+        self.input.bind('<Left>', partial(self.reset_window_position, dx=-24))
+        self.input.bind('<Down>', partial(self.reset_window_position, dy=24))
+        self.input.bind('<Up>', partial(self.reset_window_position, dy=-24))
 
         # unbind default keybindings
         for e in self.input.event_info():
@@ -527,6 +531,9 @@ class Travel(tk.Frame):
         self.input.bind('<B2-Motion>', self.dummy)
         self.input.bind('<B3-Motion>', self.dummy)
 
+    def reset_window_position(self, event, dx=0, dy=0):
+        _, x, y = self.master.wm_geometry().split('+')
+        self.master.wm_geometry('+{}+{}'.format(int(x) + dx, int(y) + dy))
 
     @property
     def pos_cur(self):
