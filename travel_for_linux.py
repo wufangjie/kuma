@@ -37,6 +37,17 @@ def send_event(detail, state, root, display, child=X.NONE,
     pass
 
 
+def get_property_string(win, typ):
+    # on xubuntu 18.04, ret will be bytes rather than string
+    try:
+        ret = win.get_full_property(typ, 0).value
+    except Exception as e:
+        return ''
+    if isinstance(ret, bytes):
+        return ret.decode('utf-8')
+    else:
+        return str(ret)
+
 
 class LinuxScreen(BaseScreen):
     """I do not use multi-workspace"""
@@ -57,9 +68,9 @@ class LinuxScreen(BaseScreen):
         for xid in xids:
             try:
                 win = disp.create_resource_object('window', xid)
-                app = str(win.get_full_property(CLASS, 0).value).split('\x00')
-                if app[1] not in {'Xfce4-panel', 'Xfdesktop'}:
-                    title = str(win.get_full_property(TITLE, 0).value)
+                app = get_property_string(win, CLASS).split('\x00')
+                if len(app) > 1 and app[1] not in {'Xfce4-panel', 'Xfdesktop'}:
+                    title = get_property_string(win, TITLE)
                     ret.append((app[1], '', title, win))
             except Exception as e:
                 pass

@@ -34,6 +34,7 @@ Pure python implemention, python3 (with tkinter) is required
 ** Linux
 1. python3-xlib is required, which may have been already installed by default
 2. xprop command line tool, which may have been already installed by default
+NOTE: xprop is included in x11-utils on ubuntu 18.04
 
 ** Windows
 win32api
@@ -107,7 +108,8 @@ config.org's format is strict unless you implement it yourself:
 | set_mark                | C-space     |                 |
 | set_mark                | C-@         | for Windows     |
 | exchange_point_and_mark | C-x         | emacs's C-x C-x |
-| select_all              | M-h         |                 |
+| select_all              |             |                 |
+| select_all_and_cut      | M-h         |                 |
 | copy                    | M-w         |                 |
 | cut                     | C-w         |                 |
 | paste                   | C-y         |                 |
