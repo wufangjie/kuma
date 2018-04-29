@@ -69,8 +69,8 @@ hl_fg = '#ffffff'
 # font_main = ('monaco', 20)
 # font_desc = ('monaco', 14)
 
-font_main = ('YouYuan', 28)
-font_desc = ('YouYuan', 20)
+font_main = ('YuanMoWen', 28)
+font_desc = ('YuanMoWen', 20)
 
 
 
@@ -480,7 +480,7 @@ class Travel(tk.Frame):
         self.input.bind('<Control-space>', self.set_mark)
         self.input.bind('<Control-at>', self.set_mark)
         self.input.bind('<Control-x>', self.exchange_point_and_mark) #
-        self.input.bind('<Alt-h>', self.select_all)
+        self.input.bind('<Alt-h>', self.select_all_and_cut)
         self.input.bind('<Alt-w>', self.copy)
         self.input.bind('<Control-w>', self.cut)
         self.input.bind('<Control-y>', self.paste)
@@ -1041,6 +1041,10 @@ class Travel(tk.Frame):
         self.input.selection_range(0, self.mark)
         self.previous = 'select_all'
         return 'break'
+
+    def select_all_and_cut(self, event):
+        self.select_all(event)
+        return self.cut(event)
 
     # mark word? (maybe something like M-h)
 
