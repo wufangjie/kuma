@@ -1259,7 +1259,7 @@ class BaseScreen:
                 def run(slf, app, idx):
                     self.activate_window_safely(slf.data[idx][-1])
                     return 'destroy' if len(slf.data) == 1 else 'hold'
-            return DataActivate(sorted(poss))
+            return DataActivate(sorted(poss, key=lambda x: (x[:-1], x[-1].id)))
 
     def close(self, pattern):
         poss = self.get_matched_windows(pattern)
