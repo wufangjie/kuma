@@ -1128,7 +1128,7 @@ class Travel(tk.Frame):
     def adjust_xview(self):
         start, end = map(lambda x: int(x * self.pos_end), self.input.xview())
         pos_cur = self.pos_cur
-        if pos_cur < start or pos_cur > end:
+        if pos_cur < start or pos_cur >= end:
             self.input.xview('insert')
 
     def load_keywords(self):
