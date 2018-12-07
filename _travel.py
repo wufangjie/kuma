@@ -769,6 +769,8 @@ class Travel(tk.Frame):
     def key_press(self, event):
         """NOTE: character won't be inserted unless the function is finished"""
         if is_inserting(event):
+            self.input.insert('insert', event.char)
+            self.adjust_xview()
             if self.selected:
                 self.unselect()
             self.previous = 'insert'
@@ -787,6 +789,7 @@ class Travel(tk.Frame):
                         self.popup.update_data(DataComplete(result, _from + 1))
                 else:
                     self.popup.quit()
+            return 'break'
 
     def run(self, event):
         ret = self._run(event)
