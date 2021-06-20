@@ -1,0 +1,45 @@
+{
+  "popup": {
+    "previous_page": "Alt+[",
+    "next_page": "Alt+]",
+    "beginning_of_data": "Alt+<",
+    "end_of_data": "Alt+>",
+    "previous_row": "Ctrl+p",
+    "next_row": "Ctrl+n",
+    "beginning_of_rows": "Alt+p",
+    "end_of_rows": "Alt+n",
+    "move_to_golden_row": "Ctrl+l"
+  },
+  "input": {
+    "backward_char": "Ctrl+b",
+    "forward_char": "Ctrl+f",
+    "backward_word": "Alt+b",
+    "forward_word": "Alt+f",
+    "beginning_of_line": "Ctrl+a",
+    "end_of_line": "Ctrl+e",
+    "keyboard_quit": "Ctrl+g",
+    "delete_char": "Ctrl+d",
+    "backward_delete_char": "Backspace",
+    "kill_word": "Alt+d",
+    "backward_kill_word": "Alt+Backspace",
+    "kill_line": "Ctrl+k",
+    "set_mark": "Ctrl+Space",
+    "exchange_point_and_mark": "Ctrl+x",
+    "mark_word": "Alt+h",
+    "capitalize_word": "Alt+c",
+    "upcase_word": "Alt+u",
+    "downcase_word": "Alt+l",
+    "transpose_chars": "Ctrl+t",
+    "copy": "Alt+w",
+    "cut": "Ctrl+w",
+    "paste": "Ctrl+y",
+    "undo": "Ctrl+/"
+  },
+  "whole": {
+    "quit": "ESC",
+    "window_up": "Up",
+    "window_down": "Down",
+    "window_left": "left",
+    "window_right": "right"
+  }
+}

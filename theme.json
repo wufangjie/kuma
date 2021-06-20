@@ -1,0 +1,36 @@
+{
+  "NOTE": "Only Load Once",
+  "app_style": "Fusion",
+  "font_name": "Yuan Mo Wen",
+  "font_size": "default",
+  "cursor_width": 2,
+  "global_style": [
+    "background-color: #131926;",
+    "color: #ffffff;",
+    "text-align: left;"
+  ],
+  "highlight_style": [
+    "background-color: #4682b4;",
+    "color: #ffffff;"
+  ],
+  "input_style": [
+    "border: 0.3em solid rgba(100, 100, 100, 100);",
+    "border-radius: 10px;selection-background-color: #4682b4;"
+  ],
+  "popup_left_style": [
+    "text-align: center;",
+    "padding: 0.5em;"
+  ],
+  "popup_main_style": [
+    "padding-left: 0.5em;"
+  ],
+  "popup_desc_style": [
+    "padding-left: 0.5em;",
+    "text-align: right;"
+  ],
+  "message_style": [
+    "margin-left: 5px;",
+    "margin-right: 5px;",
+    "padding: 0.5em;"
+  ]
+}

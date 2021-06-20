@@ -1,5 +1,5 @@
 class Data:
-    def __init__(self, data, init_ipage=0, init_index=0):
+    def __init__(self, data, hl_cur=0):
         """
         Data for popup's displaying
 
@@ -9,23 +9,20 @@ class Data:
         | pe | | description (won't display if not given) |
         ------ --------------------------------------------
 
-        data: list of row_data, row_data can be any one of
-              (text, type, description), (text, type) or (text,),
-              but please keep row_data the same shape, or it may looks ugly
-        init_ipage: popup's page index
-        init_index: popup's row index
+        data: list of row_data, row_data = {'left': '', 'main': '', 'desc': ''}
+        index: in range(0, len(data))
 
         NOTE: The two init_ can help you change (or hold) the position of
         the highlighted row, ie if your returned value is Data type, then
         your highlighted row can not be the first one now.
         """
         self.data = data
-        self.init_ipage = init_ipage
-        self.init_index = init_index
+        self.n_data = len(data)
+        self.hl_cur = min(max(0, hl_cur), self.n_data - 1)
 
     def run(self, app, idx):
         """
-        For override
+        For overriding
 
         This function will be called when press <Return> with popup displaying
 
@@ -61,7 +58,7 @@ class Data:
         pass
 
     def __len__(self):
-        return len(self.data)
+        return self.n_data#len(self.data)
 
     def __getitem__(self, index):
         return self.data[index]
@@ -71,11 +68,13 @@ class Data:
 
 
 class Message:
-    __slots__ = ['text', 'ms']
-    def __init__(self, text, ms=2000):
+    __slots__ = ['text', 'ms', 'action']
+    def __init__(self, text, ms=2000, action='hide'):
         """
-        text: string you want to display
+        text: string you want to display, support '\n' etc
         ms  : integer milliseconds before destroying the message
+        action: 'hold', 'hide', 'kill'
         """
         self.text = text
         self.ms = ms
+        self.action = action

@@ -1,907 +1,1285 @@
-import time
+from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtWidgets import QLineEdit, QLabel
+from PyQt5.QtWidgets import QPushButton
+from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QGridLayout
+from PyQt5.QtWidgets import QSizePolicy
+from PyQt5.QtWidgets import QShortcut, QAction
+from PyQt5.QtWidgets import QStyle, QProxyStyle
+
+from PyQt5.QtGui import QFont, QFontMetrics, QKeySequence#, QCursor, QTextCursor
+from PyQt5.QtCore import Qt, QEvent, QTimer#, QRect#pyqtSignal
+
 import os
-import platform
-from functools import wraps, partial
-# from collections import deque
-import tkinter as tk
-import bisect
 import re
+import sys
+import json
+import time
+import functools
+import platform
 import webbrowser
 import subprocess
+from collections import OrderedDict#, deque
 from abc import abstractmethod
 from base import Data, Message
 
 
-
-# FIXME: if I set the frame's maxwidth != minwidth, then when the completion (say a filename) is too long, after typing enter on it, we will see cursor not in the sight of input entry, because width is shorten and it seems happens after my callback function finished (I use adjust_xview after quit popup, did not work)
-
-
-# TODO: more smooth continuous movement (a char)? (when call by script improved a bit)
-
-# TODO: I didn't have a mac, so I can not test all the mac thing, may do those on a virtual machine
-
-# TODO: kill ring?
-# TODO: history and match, not allow repeat?
-# TODO: add logging?
-# TODO: add app icon?
-# TODO: use scrollbar, bottom page index or top scrollbar-like thing?
-
-
-
-# NOTE: emacs's mark is too complicated, so I simplified it:
-# every kill (decorated by), undo will delete mark
-
-# I'm not sure: pack or pack_forget multiple times influence speed
-# I use array to indicate same kind of widget's visibility, did not record if only one
-
+app = QApplication.instance() # must before FM
+if app is None:
+    # if it does not exist then a QApplication is created (windows)
+    app = QApplication(sys.argv)
 
 
 ########################################################################
 # global variables
 ########################################################################
+DEBUG = True#False#
+PLATFORM = platform.system() # {'Linux', 'Windows', 'Darwin'}
+
 try:
-    path = os.path.split(os.path.realpath(__file__))[0]
+    PATH = os.path.split(os.path.realpath(__file__))[0]
 except NameError:
-    path = os.getcwd() or os.getenv('PWD')
+    PATH = os.getcwd() or os.getenv('PWD')
+
+def load_json(filename):
+    with open(os.path.join(PATH, filename), 'rt', encoding='utf-8') as f:
+        return json.load(f)
 
 
-PLATFORM = platform.system() # {Linux Windows Darwin}
-open_command = {'Linux': 'xdg-open',
-                'Windows': {True: 'start', False: 'call'}, # open a dir or not
-                'Darwin': 'open'}
-assert PLATFORM in open_command
+THEME = load_json('theme.json')
+for key, val in THEME.items():
+    if isinstance(val, (list, tuple)):
+        THEME[key] = ' '.join(val)
 
+FONT_NAME = THEME.get('font_name', 'Yuan Mo Wen')
+font_size = THEME.get('font_size', 'default')
+if font_size == 'default':
+    PS = QFont(FONT_NAME).pointSize()
+else:
+    PS = int(font_size)
+FONT_MAIN = QFont(FONT_NAME, PS << 1)
+FONT_DESC = QFont(FONT_NAME, PS)
+FM = QFontMetrics(FONT_MAIN)
+PS1 = round(FM.height() / 3) # pixelSize
+PS2 = PS1 << 1
+PS3 = PS1 * 3
+PS5 = PS1 * 5 # 2 + 3 = 5
+
+
+QApplication.setStyle(THEME.get('app_style', 'Fusion')) # NOTE: for windows
+if False:
+    from PyQt5.QtWidgets import QStyleFactory
+    print(QStyleFactory.keys()) # see more application styles
+
+re_path = re.compile(r'^([A-Za-z]:|~|/)')
+
+
+class CursorStyle(QProxyStyle):
+    def __init__(self, tcw, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            self.tcw = int(tcw)
+        except:
+            self.tcw = 2
+
+    def pixelMetric(self, metric, *args, **kwargs):
+        if metric == QStyle.PM_TextCursorWidth:
+            return self.tcw
+        return super().pixelMetric(metric, *args, **kwargs)
 
 
 ########################################################################
-# color and font
+# Row
 ########################################################################
-input_bg = '#bebebe'
-desc_fg = '#696969' # description
-
-bg = '#d3d3d3'
-fg = '#000000'
-
-hl_bg = '#4682b4'
-hl_fg = '#ffffff'
-
-
-# font_main = ('monaco', 20)
-# font_desc = ('monaco', 14)
-
-font_main = ('YuanMoWen', 28)
-font_desc = ('YuanMoWen', 20)
-
-
-
-
-########################################################################
-# useful functions
-########################################################################
-def print_event():
-    """
-    Strike keyboard to print corresponding event
-    NOTE: ] is not keysym, bracketright is
-    NOTE: Alt + 1-5 does not work, use <Alt-KeyPress-1> instead:
-    https://mail.python.org/pipermail/tkinter-discuss/2013-September/003488.html
-    """
-    fred = tk.Entry()
-    fred.pack()
-    fred.focus_set()
-    fred.bind('<KeyPress>', lambda event: print(event.__dict__))
-    fred.mainloop()
-
-
-def get_char_type(c):
-    """Add your language's word's characters"""
-    if 'a' <= c <= 'z' or 'A' <= c <= 'Z' or '0' <= c <= '9':
-        return 'english'
-    if 0x4e00 <= ord(c) <= 0x9fa6:
-        return 'chinese'
-    return None
-
-
-def is_inserting(event):
-    """
-    Check if the event is inserting a character
-
-    |   Mask | Modifier        |
-    |--------+-----------------|
-    | 0x0001 | Shift.          |
-    | 0x0002 | Caps Lock.      |
-    | 0x0004 | Control.        |
-    | 0x0008 | Left-hand Alt.  |
-    | 0x0010 | Num Lock.       |
-    | 0x0080 | Right-hand Alt. |
-    | 0x0100 | Mouse button 1. |
-    | 0x0200 | Mouse button 2. |
-    | 0x0400 | Mouse button 3. |
-    See http://infohost.nmt.edu/tcc/help/pubs/tkinter/web/event-handlers.html
-
-    without modifier, state = 0, then add all modifier.
-    but I found Num Lock is 0x0008 in windows
-    TODO: find a document or post which declare it, test on Mac
-    """
-    if event.char != '':
-        # Windows: NumLock, ScrLk, NumLock+ScrLk
-        # Linux: NumLock
-        poss = (0, 8, 32, 40) if PLATFORM == 'Windows' else (0, 16)
-        for p in poss:
-            if event.state < p:
-                break
-            elif event.state < p + 4: # Shift, Caps Lock
-                return True
-    return False
-
-
-
-class DataComplete(Data):
-    def __init__(self, data, _from=0):
-        super().__init__(data)
-        self._from = _from
-
-    def run(self, app, idx):
-        app.insert_one_greedy(self.data[idx][0], self._from)
-        app.save_state_if_needed()
-
-
-
-class Row(tk.Frame):
-    """
-    About icon display:
-    http://effbot.org/pyfaq/why-do-my-tkinter-images-not-appear.htm
-    """
+class Row(QWidget):
     def __init__(self, master, index):
-        super().__init__(master, bg=bg)
-        self.pack(fill='x')
+        super().__init__(master)
         self.master = master
         self.index = index
 
-        self.left = tk.Label(self, anchor='w', font=font_main, bg=bg)
-        self.left.pack(fill='y', side='left')
-        self.right = tk.Label(self, anchor='w', font=font_main, bg=bg)
-        self.right.pack(fill='x')
-        self.down = tk.Label(self, anchor='w', font=font_desc, bg=bg, fg=desc_fg)
-        # self.down.pack(fill='x')
-        self.down_packed = False
+        self.left = self.make_component(FONT_MAIN, PS5)
+        self.main = self.make_component(FONT_MAIN, PS3)
+        self.desc = self.make_component(FONT_DESC, PS2)
+
+        self.left.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
+        self.main.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.desc.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+
+        self.left.setStyleSheet(THEME.get('popup_left_style', ''))
+        self.main.setStyleSheet(THEME.get('popup_main_style', ''))
+        self.desc.setStyleSheet(THEME.get('popup_desc_style', ''))
+
+        layout = QGridLayout()
+        layout.addWidget(self.left, 0, 0, 2, 1) # rowspan, columnspan
+        layout.addWidget(self.main, 0, 1)
+        layout.addWidget(self.desc, 1, 1)
+        layout.setSpacing(0)
+        layout.setContentsMargins(5, 0, 5, 0) # (l, t, r, b) margin
+        self.setLayout(layout)
+
+    def make_component(self, font, height):
+        comp = QPushButton(self)
+        comp.setEnabled(False)
+        comp.setFont(font)
+        comp.setFixedHeight(height)
+        return comp
+
+    def hide(self):
+        self.setHidden(True)
+
+    def hide_desc(self):
+        self.desc.setHidden(True)
+        self.main.setFixedHeight(PS5)
+
+    def show_desc(self):
+        self.desc.setHidden(False)
+        self.main.setFixedHeight(PS3)
 
     def highlight(self):
-        self.left['bg'] = self.right['bg'] = self.down['bg'] = hl_bg
-        self.left['fg'] = self.right['fg'] = self.down['fg'] = hl_fg
+        self.setStyleSheet(THEME.get('highlight_style', ''))
 
     def unhighlight(self):
-        self.left['bg'] = self.right['bg'] = self.down['bg'] = bg
-        self.left['fg'] = self.right['fg'] = fg
-        self.down['fg'] = desc_fg
+        self.setStyleSheet('')
 
-    def update_data(self, data, type_width):
-        n = len(data)
-        assert n > 0
-        self.right['text'] = data[0]
-        self.left['text'] = data[1] if n > 1 else ''
-        self.left['width'] = type_width + 1 if type_width else 0
-        if n < 3 or not data[2]:
-            # self.down['text'] = ''
-            if self.down_packed:
-                self.down_packed = False
-                self.down.pack_forget()
+    def update_data(self, data, lw, rw):
+        self.main.setText(data.get('main', ''))
+        self.main.setFixedWidth(rw)
+        self.left.setText(data.get('left', ''))
+        self.left.setFixedWidth(lw)
+        desc = data.get('desc', '')
+        if desc:
+            self.desc.setText(desc)
+            self.desc.setFixedWidth(rw)
+            self.show_desc()
         else:
-            self.down['text'] = data[2]
-            if not self.down_packed:
-                self.down_packed = True
-                self.down.pack(fill='x')
+            self.hide_desc()
+        self.setHidden(False)
 
 
-
+########################################################################
+# Popup
+########################################################################
 def movebd(func):
     """Move between data"""
-    @wraps(func)
+    @functools.wraps(func)
     def wrapper(self, *args):
-        if self.total:
-            pre_ipage, pre_hl_idx = self.ipage, self.hl_idx
+        if self.n_data:
+            j_page, hl_pre = self.i_page, self.hl_pos
+            if DEBUG:
+                print('calling {}...'.format(func.__name__))
             func(self, *args)
-            if pre_ipage != self.ipage:
+            if j_page != self.i_page:
                 self.update_display()
-            if pre_hl_idx != self.hl_idx:
-                self.highlight(pre_hl_idx)
+            if hl_pre != self.hl_pos:
+                self.highlight(hl_pre=hl_pre)
         return 'break'
     return wrapper
 
 
-class Popup(tk.Frame):
+class Popup(QWidget):
     def __init__(self, master):
-        """
-        relief: {flat, groove, raised, sunken, ridge}
-        removed bottom page index with multi-pages
-        """
-        super().__init__(master, borderwidth=2, relief='ridge', bg=bg)
+        super().__init__(master)
+        self.setHidden(True)
         self.master = master
-        self.maxdisp = 9 # for golden row
+        self.maxdisp = 9
+
+        self.data = []
+        self.i_page = 0
+        self.n_page = 0
+        self.n_data = 0
+        self.hl_pos = 0 # in range(0, self.maxdisp)
+
+        layout = QVBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         self.rows = []
+        for i in range(self.maxdisp):
+            self.rows.append(Row(self, i))
+            layout.addWidget(self.rows[-1])
+        self.setLayout(layout)
+        #self.setStyleSheet('margin-left: 0.5em; margin-right: 0.5em;')
 
-        self.data = None
-        self.ipage = 0
-        self.page_1 = 0 # total page - 1
-        self.total = 0
-        self.hl_idx = 0
-        self.packed = [False] * self.maxdisp
+    def __bool__(self):
+        return self.n_data > 0
+
+    @property
+    def hl_cur(self): # in range(0, self.n_data)
+        return self.i_page * self.maxdisp + self.hl_pos
+
+    @property
+    def maxpos(self): # max position in current page
+        if self.i_page == self.n_page:
+            return (self.n_data - 1) % self.maxdisp
+        else:
+            return self.maxdisp - 1
 
     def update_display(self):
-        start = self.ipage * self.maxdisp
-        hl_max = self.total - start
-
-        type_width = max(len(self.data[start + i][1])
-                         for i in range(min(hl_max, self.maxdisp)))
-        for i, row in enumerate(self.rows):
-            if i < hl_max:
-                if not self.packed[i]:
-                    row.pack(fill='x')
-                    self.packed[i] = True
-                row.update_data(self.data[start + i], type_width)
-            else:
-                row.pack_forget()
-                self.packed[i] = False
+        i0 = self.i_page * self.maxdisp
+        width = max([FM.width(d.get('left', ''))
+                     for d in self.data[i0 : i0 + self.maxdisp]])
+        if width:
+            width += 22 # NOTE: padding-left + padding-right + 2
+        rw = self.master.app_width - width
+        for i in range(i0, min(i0 + self.maxdisp, self.n_data)):
+            self.rows[i - i0].update_data(self.data[i], width, rw)
+        for j in range(i - i0 + 1, self.maxdisp):
+            self.rows[j].hide()
+        self.setHidden(False)
+        self.adjustSize()
+        self.master.adjustSize()
 
     def update_data(self, data):
-        """Guarantee sorted"""
-        if not self.rows:
-            self.rows = [Row(self, i) for i in range(self.maxdisp)]
-            self.rows[0].highlight()
-        pre_hl_idx = self.hl_idx
         self.data = data
-        self.total = len(data)
-        self.page_1 = (self.total - 1) // self.maxdisp
-        self.pack(fill='x', pady=(2, 0))
-        self.ipage = max(0, min(data.init_ipage, self.page_1))
-        self.hl_idx = min(data.init_index, self.maxdisp - 1)
-        self.guarantee_not_exceed()
+        self.n_data = data.n_data
+        self.n_page = (data.n_data - 1) // self.maxdisp
+        self.i_page = data.hl_cur // self.maxdisp
         self.update_display()
-        self.highlight(pre_hl_idx)
+        self.highlight(hl_new=(data.hl_cur % self.maxdisp))
 
     def quit(self):
-        self.total = 0
-        self.pack_forget()
+        if self.n_data:
+            self.n_data = 0
+            #self.rows[self.hl_pos].unhighlight() # is it needed?
+            self.setHidden(True)
+            self.master.adjustSize()
 
-    def highlight(self, pre_hl_idx):
-        self.rows[pre_hl_idx].unhighlight()
-        self.rows[self.hl_idx].highlight()
+    def highlight(self, hl_pre=None, hl_new=None):
+        assert (hl_pre is None) ^ (hl_new is None)
+        if hl_pre is None:
+            self.rows[self.hl_pos].unhighlight()
+            self.hl_pos = hl_new
+        else:
+            self.rows[hl_pre].unhighlight()
+        self.rows[self.hl_pos].highlight()
 
     def run(self):
-        if self.total:
-            return self.data.run(
-                self.master, self.ipage * self.maxdisp + self.hl_idx)
-
-    def guarantee_not_exceed(self):
-        temp = self.total - 1 - self.ipage * self.maxdisp
-        if self.hl_idx > temp:
-            self.hl_idx = temp
+        if self.n_data:
+            return self.data.run(self.master, self.hl_cur)
 
     @movebd
-    def next_page(self, event):
-        if self.ipage < self.page_1:
-            self.ipage += 1
-            self.guarantee_not_exceed()
+    def next_page(self):
+        if self.i_page < self.n_page:
+            self.i_page += 1
+        if self.i_page == self.n_page:
+            self.hl_pos = min(self.hl_pos, self.maxpos)
 
     @movebd
-    def previous_page(self, event):
-        if self.ipage > 0:
-            self.ipage -= 1
+    def previous_page(self):
+        if self.i_page > 0:
+            self.i_page -= 1
 
     @movebd
-    def beginning_of_data(self, event):
-        self.ipage = 0
-        self.hl_idx = 0
+    def beginning_of_data(self):
+        self.i_page = 0
+        self.hl_pos = 0
 
     @movebd
-    def end_of_data(self, event):
-        if self.ipage < self.page_1:
-            self.ipage = self.page_1
-            self.hl_idx = self.total - 1 - self.ipage * self.maxdisp
+    def end_of_data(self):
+        self.i_page = self.n_page
+        self.hl_pos = self.maxpos
 
     @movebd
-    def next_row(self, event):
-        if self.hl_idx < self.maxdisp - 1 and self.packed[self.hl_idx + 1]:
-            self.hl_idx += 1
+    def next_row(self):
+        if (self.hl_pos < self.maxdisp - 1
+            and self.hl_cur < self.n_data):
+            self.hl_pos += 1
 
     @movebd
-    def previous_row(self, event):
-        if self.hl_idx > 0:
-            self.hl_idx -= 1
+    def previous_row(self):
+        if self.hl_pos > 0:
+            self.hl_pos -= 1
 
     @movebd
-    def move_to_golden_row(self, event):
+    def beginning_of_rows(self):
+        self.hl_pos = 0
+
+    @movebd
+    def end_of_rows(self):
+        self.hl_pos = self.maxpos
+
+    @movebd
+    def move_to_golden_row(self):
         """Designed for fewest keystrokes"""
-        n = sum(self.packed)
+        n = sum([row.isVisible() for row in self.rows])
         if n > 7:
             m = 2
         elif n > 4:
             m = 1
         else:
             m = 0
-        self.hl_idx = n - 1 - m if self.hl_idx < (n >> 1) else m
-
-    @movebd
-    def cycle_page(self, event):
-        if self.ipage < self.page_1:
-            self.ipage += 1
-            self.guarantee_not_exceed()
-        else:
-            self.ipage = 0
-
-    @movebd
-    def cycle_page_reverse(self, event):
-        if self.ipage > 0:
-            self.ipage -= 1
-        else:
-            self.ipage = self.page_1
-            self.guarantee_not_exceed()
+        self.hl_pos = n - 1 - m if self.hl_pos < (n >> 1) else m
 
 
-
-def create_root():
-    root = tk.Tk()
-    root.title('kuma')
-    # If you were to go on a trip... where would you like to go?
-    width, height = root.maxsize()
-    width_min = width * 5 // 12
-    # root.maxsize(width_min, height)
-    root.maxsize(width // 2, height)
-    root.minsize(width_min, 1)
-    root.resizable(0, 0)
-    root.geometry('+{}+{}'.format((width - width_min) // 2, height // 4))
-    return root
-
-
+########################################################################
+# Input
+########################################################################
 def move(func):
-    @wraps(func)
+    @functools.wraps(func)
     def wrapper(self, *args):
+        if DEBUG:
+            print('calling {}...'.format(func.__name__)) # test calling
         func(self, *args)
+        self.setCursorPosition(self.cursorPosition())
+        # NOTE: set position is important for continuous calling
         if self.selected:
             self.select()
-        if self.popup.total:
-            self.popup.quit()
-        self.adjust_xview()
-        self.previous = 'move'
-        return 'break'
+        self.master.hide_popup()
+        self.pre_action = 'move'
     return wrapper
 
 
 def kill(func):
-    @wraps(func)
+    @functools.wraps(func)
     def wrapper(self, *args):
         self.save_state_if_needed()
+        if DEBUG:
+            print('calling {}...'.format(func.__name__))
         func(self, *args)
+        if self.mark is not None:
+            pos = self.cursorPosition()
+            if pos < self.mark:
+                self.mark = max(pos, self.mark - self.killed)
         self.save_state_if_needed()
-        if self.selected:
-            self.unselect()
-        if self.popup.total:
-            self.popup.quit()
-        self.adjust_xview()
-        self.mark = None
-        self.previous = 'delete' if func.__name__.endswith('_char') else 'kill'
-        return 'break'
+        self.unselect()
+        self.master.hide_popup()
+        self.pre_action = (
+            'delete' if func.__name__.endswith('_char') else 'kill')
+    return wrapper
+
+
+def unique(func):
+    @functools.wraps(func)
+    def wrapper(self, *args):
+        if DEBUG:
+            print('calling {}...'.format(func.__name__))
+        func(self, *args)
+        self.pre_action = func.__name__
     return wrapper
 
 
 def save_unselect_and_quit(func):
-    @wraps(func)
+    @functools.wraps(func)
     def wrapper(self, *args):
         self.save_state_if_needed()
+        if DEBUG:
+            print('calling {}...'.format(func.__name__))
         func(self, *args)
         self.save_state_if_needed()
-        if self.selected:
-            self.unselect()
-        if self.popup.total:
-            self.popup.quit()
-        self.adjust_xview()
+        self.unselect()
+        self.master.hide_popup()
         self.previous = func.__name__
-        return 'break'
     return wrapper
 
 
-class Travel(tk.Frame):
-    def __init__(self, screen, is_hidden=False,
-                 keyword_file='config.org'):
-        self.screen = screen
-        self.master = create_root()
-        super().__init__(self.master)
-        self.pack(fill='x')
+class Input(QLineEdit):
+    # NOTE: setSelection() will change the cursor's position
+    def __init__(self, master):
+        super().__init__(master)
+        self.master = master
+        self.clipboard = QApplication.clipboard()
+        self.init_state()
+        self.killed = 0
+        self.setContextMenuPolicy(Qt.NoContextMenu) # disable rightclick
+        # self.setPlaceholderText('Search')
 
-        self.keyword_file = os.path.join(path, keyword_file)
-        # use modification time to determine to reload or not
-        self.keyword_mtime = 0
+        self.setStyle(CursorStyle(THEME.get('cursor_width', 2)))
+
+        # os.environ['QT_IM_MODULE'] = 'fcitx'
+        # self.setAttribute(Qt.WA_InputMethodEnabled)
+        # self.setAttribute(Qt.WA_InputMethodTransparent)
+
+        self.init_ui()
+
+    def init_state(self):
+        self.mark = None
+        self.selected = False
 
         self.states = ['']
         self.positions = [0]
-        self.idx = 0
+        self.state_idx = 0
 
-        # self.kill_ring = deque() # TODO: emacs-like kill ring
+        self.pre_action = '' # kill, undo, and others
 
-        self.previous = None
+    def init_ui(self):#, height=PS5, font=FONT_MAIN, style='default'):
+        self.setMinimumWidth(self.master.app_width)
+        self.setFixedHeight(PS5)
+        self.setFont(FONT_MAIN)
+        self.setStyleSheet(THEME.get('input_style', ''))
 
-        self.mark = None
-        self.selected = False
-        # selection_present() can not present one point selection
-        # so we must do it by hand
-        # Only three ways will turn self.selected to True:
-        # 1. self.select_all
-        # 2. self.set_mark
-        # 3. self.exchange_point_and_mark
+        #self.input.setMinimumWidth(self.width // 2)
+        #self.input.setMaximumWidth(self.width * 3 // 4)
 
-        self._topmost = False
-
-
-        self.input = tk.Entry(self, borderwidth=1, bg=input_bg,
-                              font=font_main, selectbackground=hl_bg,
-                              selectforeground=hl_fg,
-                              insertwidth=2, exportselection=0)
-        self.input.pack(fill='x', padx=(1, 0))
-        self.input.focus_set()
-
-        self.popup = Popup(self)
-
-
-        self.win_drives = None
-        self.win_drive_template = '{}:/' # + os.path.sep
-
-
-        self.is_hidden = is_hidden
-        if self.is_hidden:
-            self.master.withdraw()
-        else:
-            self._show()
-
-        # NOTE: now you can not kill kuma by closing window
-        # Linux's send_event discouraged me deeply,
-        # This is the only way I can think out
-        self.master.protocol('WM_DELETE_WINDOW', self._destroy)
-
-
-        # keybinding
-        self.input.bind('<Return>', self.run)
-        self.input.bind('<Tab>', self.complete)
-        self.input.bind('<Control-g>', self.keyboard_quit)
-        self.input.bind('<Escape>', self.quit)
-
-
-        self.input.bind('<Control-f>', self.forward_char)
-        self.input.bind('<Control-b>', self.backward_char)
-        self.input.bind('<Alt-f>', self.forward_word)
-        self.input.bind('<Alt-b>', self.backward_word)
-        self.input.bind('<Control-a>', self.move_beginning_of_line)
-        self.input.bind('<Control-e>', self.move_end_of_line)
-        self.input.bind('<Control-d>', self.delete_char)
-        self.input.bind('<BackSpace>', self.backward_delete_char)
-        self.input.bind('<Alt-d>', self.kill_word)
-        self.input.bind('<Alt-BackSpace>', self.backward_kill_word)
-        self.input.bind('<Control-k>', self.kill_line)
-        # self.input.bind('<>', self.backward_kill_line)
-        self.input.bind('<Control-space>', self.set_mark)
-        self.input.bind('<Control-at>', self.set_mark)
-        self.input.bind('<Control-x>', self.exchange_point_and_mark) #
-        self.input.bind('<Alt-h>', self.select_all_and_cut)
-        self.input.bind('<Alt-w>', self.copy)
-        self.input.bind('<Control-w>', self.cut)
-        self.input.bind('<Control-y>', self.paste)
-        self.input.bind('<Control-slash>', self.undo)
-
-        self.input.bind('<KeyPress>', self.key_press)
-        self.input.bind('<Control-t>', self.transpose_chars)
-        self.input.bind('<Alt-t>', self.toggle_topmost)
-
-
-        self.input.bind('<Alt-bracketright>', self.popup.next_page)
-        self.input.bind('<Alt-bracketleft>', self.popup.previous_page)
-        self.input.bind('<Control-n>', self.popup.next_row)
-        self.input.bind('<Control-p>', self.popup.previous_row)
-        self.input.bind('<Alt-Shift-greater>', self.popup.end_of_data)
-        self.input.bind('<Alt-Shift-less>', self.popup.beginning_of_data)
-        self.input.bind('<Control-l>', self.popup.move_to_golden_row)
-
-        if PLATFORM == 'Linux':
-            self.input.bind('<ISO_Left_Tab>', self.popup.cycle_page_reverse)
-        else:
-            self.input.bind('<Shift-KeyPress-Tab>',
-                            self.popup.cycle_page_reverse)
-
-
-        # # NOTE: change following to window motion
-        # self.input.bind('<Right>', self.popup.next_page)
-        # self.input.bind('<Left>', self.popup.previous_page)
-        # self.input.bind('<Down>', self.popup.next_row)
-        # self.input.bind('<Up>', self.popup.previous_row)
-
-        self.input.bind('<Right>', partial(self.reset_window_position, dx=24))
-        self.input.bind('<Left>', partial(self.reset_window_position, dx=-24))
-        self.input.bind('<Down>', partial(self.reset_window_position, dy=24))
-        self.input.bind('<Up>', partial(self.reset_window_position, dy=-24))
-
-        # unbind default keybindings
-        for e in self.input.event_info():
-            self.input.event_delete(e) # event_add to add
-
-        # disable mouse click
-        self.input.bind('<Button-1>', self.dummy)
-        self.input.bind('<Button-2>', self.dummy)
-        self.input.bind('<Button-3>', self.dummy)
-        self.input.bind('<B1-Motion>', self.dummy)
-        self.input.bind('<B2-Motion>', self.dummy)
-        self.input.bind('<B3-Motion>', self.dummy)
-
-    def reset_window_position(self, event, dx=0, dy=0):
-        _, x, y = self.master.wm_geometry().split('+')
-        self.master.wm_geometry('+{}+{}'.format(int(x) + dx, int(y) + dy))
-
-    @property
-    def pos_cur(self):
-        return self.input.index('insert')
-
-    @property
-    def pos_end(self):
-        return self.input.index('end')
+    def quit(self):
+        self.init_state()
+        # self.input.unselect()
+        self.clear()
 
     def select(self):
         if self.mark is not None:
-            self.input.selection_range(*sorted((self.mark, self.pos_cur)))
+            self.selected = True
+            self.setSelection(self.mark, self.cursorPosition() - self.mark)
+            # the second param can be negative
 
     def unselect(self):
-        self.selected = False
-        self.input.selection_clear()
-
-    def save_state_if_needed(self):
-        """Since move operation won't be saved, the position is interesting"""
-        temp = self.input.get()
-        if self.states[-1] != temp:
-            self.states.append(temp)
-            self.positions.append(self.pos_cur)
-        else:
-            self.positions[-1] = self.pos_cur
-
-    def clipboard_append(self, content):
-        if self.previous != 'kill':
-            self.input.clipboard_clear()
-        self.input.clipboard_append(content)
-
-    def clipboard_append_left(self, content):
-        if self.previous == 'kill':
-            content += self.input.clipboard_get()
-        self.input.clipboard_clear()
-        self.input.clipboard_append(content)
-
-
-
-    def dummy(self, event):
-        return 'break'
-
-    def keyboard_quit(self, event):
-        if self.popup.total:
-            self.popup.quit()
-        elif self.selected:
-            self.unselect()
-        return 'break'
-
-    def quit(self, event):
-        if self.popup.total:
-            self.popup.quit()
-        else:
-            self._destroy()
-        return 'break'
-
-    def show_message(self, msg):
-        m = tk.Message(
-            self, aspect=6000, text=msg.text, anchor='w',
-            font=font_main, relief='ridge', borderwidth=2)
-        m.pack(fill='x', pady=(2, 0))
-        m.after(msg.ms, m.destroy)
-
-    def get_win_drives(self):
-        """Get possible drive, for windows"""
-        if self.win_drives is None:
-            self.win_drives = []
-            for c in 'CDEFGHIJKLMNOPQRSTUVWXYZ':
-                temp = self.win_drive_template.format(c)
-                if os.path.isdir(temp):
-                    self.win_drives.append((temp, 'D'))
-
-    def complete(self, event):
-        """Only two types of completions: path and keywords"""
         if self.selected:
-            self.unselect()
+            self.selected = False
+            self.deselect()
 
-        pos_cur = self.pos_cur
-        content = self.input.get()
-        pre = content[:pos_cur]
+    def keyboard_insert(self, text):
+        self.unselect() # self.deselect()
+        if (self.mark is not None
+            and self.cursorPosition() < self.mark):
+            self.mark += len(text)
+        self.insert(text) # TODO: add pre_action and save state sometimes
+        self.pre_action = 'insert'
+        if self.master.popup:
+            if self.master.is_completing:
+                if self.master.trie_last:
+                    self.master.complete_keyword(text, False)
+                else:
+                    self.master.complete_path(self.get_text_before_cursor())
+            else:
+                self.master.hide_popup()
 
-        previous, self.previous = self.previous, 'tab'
+    def complete_insert(self, insert):
+        self.unselect()
+        text = self.text()
+        n1, n2 = len(text), len(insert)
+        i1, i2 = self.cursorPosition(), 0
+        while i1 < n1 and i2 < n2:
+            if text[i1] == insert[i2]:
+                i1 += 1
+                i2 += 1
+            else:
+                break
+        self.setCursorPosition(i1)
+        self.save_state_if_needed()
+        self.insert(insert[i2:])
         self.save_state_if_needed()
 
-        if self.popup.total:
-            if previous in {'tab', 'run'}:
-                self.popup.cycle_page(event)
-            elif previous == 'insert':
-                if self.popup.total == 1:
-                    self.insert_one_greedy(
-                        self.popup.data[0][0], self.popup.data._from)
+    def get_text_before_cursor(self):
+        return self.text()[:self.cursorPosition()]
+
+    def save_state_if_needed(self):
+        if self.states[-1] != self.text():
+            self.states.append(self.text())
+            self.positions.append(self.cursorPosition())
+        else: # just move
+            self.positions[-1] = self.cursorPosition()
+
+    def clipboard_append(self, content):
+        if self.pre_action != 'kill':
+            self.clipboard.setText(content)
+        else:
+            self.clipboard.setText(self.clipboard.text() + content)
+
+    def clipboard_appendleft(self, content):
+        if self.pre_action != 'kill':
+            self.clipboard.setText(content)
+        else:
+            self.clipboard.setText(content + self.clipboard.text())
+
+    def get_char_type(self, char):
+        if ('A' <= char <= 'Z') or ('a' <= char <= 'z'):
+            return 'abc'
+        elif '0' <= char <= '9':
+            return 'num'
+        # elif char in {' ', '\t', '\n'}:
+        #     return 'spc'
+        # elif char in {'/', ';', ',', '-', '_'}:
+        #     return 'sep'
+        elif 0x4e00 <= ord(char) <= 0x9fa6:
+            return 'han'
+        else:
+            return 'thr'
+
+    def word_end(self, step, text=None):
+        start = self.cursorPosition() - (step < 0)
+        if text is None:
+            text = self.text()
+        types = set()
+
+        i = start
+        str_end = len(text) if step > 0 else -1
+        while (i - str_end) * step < 0:
+            types.add(self.get_char_type(text[i]))
+            if len(types) == 2:
+                break
+            i += step
+        return abs(i - start)
+
+    @move
+    def backward_char(self):
+        self.cursorBackward(False, 1)
+
+    @move
+    def forward_char(self):
+        self.cursorForward(False, 1)
+
+    @move
+    def backward_word(self):
+        # self.cursorWordBackward(False)
+        self.cursorBackward(False, self.word_end(-1))
+
+    @move
+    def forward_word(self):
+        # self.cursorWordForward(False)
+        self.cursorForward(False, self.word_end(1))
+
+    @move
+    def beginning_of_line(self):
+        #self.home(False)
+        self.setCursorPosition(0)
+
+    @move
+    def end_of_line(self):
+        self.end(False)
+
+    @unique
+    def keyboard_quit(self):
+        self.master.hide_popup()
+        self.unselect()
+
+    @kill
+    def delete_char(self):
+        self.setSelection(self.cursorPosition(), 1)
+        self.backspace()
+        self.killed = 1
+
+    @kill
+    def backward_delete_char(self):
+        self.backspace()
+        self.killed = 1
+
+    @kill
+    def kill_word(self):
+        pos = self.cursorPosition()
+        self.killed = self.word_end(1)
+        self.setSelection(pos, self.killed)
+        self.clipboard_append(self.selectedText())
+        self.backspace()
+
+    @kill
+    def backward_kill_word(self): # M-DEL
+        pos = self.cursorPosition()
+        self.killed = self.word_end(-1)
+        self.setSelection(pos, -self.killed)
+        self.clipboard_appendleft(self.selectedText())
+        self.backspace()
+
+    @kill
+    def kill_line(self):
+        pos = self.cursorPosition()
+        text = self.text()
+        self.clipboard_append(text[pos:])
+        self.setText(text[:pos])
+        self.killed = len(text) - pos
+
+    @kill
+    def backward_kill_line(self):
+        """Emacs no such function"""
+        pos = self.cursorPosition()
+        self.setSelection(0, pos) # pos, 0 - pos)
+        self.clipboard_appendleft(self.selectedText())
+        self.backspace()
+        self.killed = pos
+
+    @unique
+    def set_mark(self):
+        self.mark = self.cursorPosition()
+        self.unselect()
+        self.selected = True
+
+    @unique
+    def exchange_point_and_mark(self):
+        """TODO: Only break continuous kill, not undo?"""
+        if self.mark is not None:
+            pos = self.cursorPosition()
+            self.selected = True
+            if self.mark != pos:
+                self.setCursorPosition(self.mark)
+                self.mark = pos
+                self.select()
+                # if self.pre_action == 'kill':
+                #     self.pre_action = 'exchange'
+
+    @unique
+    def select_all(self): # seems useless
+        self.selectAll()
+        self.mark = self.cursorPosition()
+        self.setCursorPosition(0)
+        self.selected = True
+
+    @kill
+    def select_all_and_cut(self): # seems useless
+        #self.select_all()
+        self.clipboard.setText(self.text())
+        self.clear()
+
+    @unique
+    def mark_word(self): # M-@ -> M-h
+        self.forward_word()
+        self.set_mark()
+        self.backward_word()
+
+    @save_unselect_and_quit
+    def capitalize_word(self):
+        self.setSelection(self.cursorPosition(), self.word_end(1))
+        text = self.selectedText()
+        self.backspace()
+        self.insert(text.capitalize())
+
+    @save_unselect_and_quit
+    def upcase_word(self):
+        self.setSelection(self.cursorPosition(), self.word_end(1))
+        text = self.selectedText()
+        self.backspace()
+        self.insert(text.upper())
+
+    @save_unselect_and_quit
+    def downcase_word(self):
+        self.setSelection(self.cursorPosition(), self.word_end(1))
+        text = self.selectedText()
+        self.backspace()
+        self.insert(text.lower())
+
+    @save_unselect_and_quit
+    def transpose_chars(self):
+        pos = self.cursorPosition()
+        if pos != 0:
+            self.setSelection(pos - 1, 2)
+            if len(self.selectedText()) == 1:
+                if pos == 1: # only one character
+                    self.setCursor(0)
                 else:
-                    _from = self.popup.data._from
-                    prefix = self.longest_common_prefix(self.popup.data, _from)
-                    if len(prefix) > _from:
-                        self.input.insert('insert', prefix[_from:])
-                        self.adjust_xview()
-                        self.popup.data._from = len(prefix)
-                    # should move to first?
-            return 'break'
+                    self.setSelections(pos - 2, 2)
+            text = self.selectedText()
+            self.backspace()
+            self.insert(text[::-1])
 
-        if pre == '~':
-            self.input.insert(pos_cur, '/')
-            return 'break'
-
-        if pre.startswith('/') or pre.startswith('~/'):
-            # os.path.split (os.path.dirname, os.path.basename)
-            # os.path.expanduser os.path.join os.sep os.pathsep
-            if PLATFORM == 'Windows' and pre[0] == '/':
-                lpre = len(pre) - 1
-                if lpre < 3:
-                    if lpre > 0:
-                        temp = self.win_drive_template.format(pre[1])
-                        if os.path.isdir(temp):
-                            self.insert_one_greedy(temp, lpre)
-                            # self.input.insert(pos_cur, temp[lpre:])
-                    else:
-                        self.get_win_drives()
-                        if len(self.win_drives) == 1:
-                            self.insert_one_greedy(self.win_drives[0], 0)
-                            # self.input.insert(pos_cur, self.win_drives[0])
-                        else:
-                            self.popup.update_data(self.win_drives)
-                    return 'break'
-                pre = pre[1:]
-
-            dirname, basename = os.path.split(os.path.expanduser(pre))
-            result = []
-            for root, dirs, files in os.walk(dirname):
-                if root != dirname:
-                    break
-                result.extend(sorted((d + '/', 'D') for d in dirs
-                                     if d.startswith(basename)))
-                # os.path.sep -> '/', ord('/') = 47 while ord('\\') = 92
-                result.extend(sorted((f, '') for f in files
-                                     if f.startswith(basename)))
-            self._complete(result, basename)
-        else:
-            self.load_keywords()
-            if pre == '':
-                result = self.kv_list_sorted_by_type
+    @save_unselect_and_quit
+    def copy(self):
+        pos = self.cursorPosition()
+        if self.mark is not None and self.mark != pos:
+            text = self.text()
+            self.clipboard.clear()
+            if self.mark < pos:
+                self.clipboard_append(text[self.mark : pos])
             else:
-                i = bisect.bisect_left(self.keywords, pre)
-                result = []
-                while i < self.nkeyword:
-                    if not self.keywords[i].startswith(pre):
-                        break
-                    result.append(self.kv_list[i])
-                    i += 1
-                result.sort(key=lambda x: x[1]) # stable sort
+                self.clipboard_append(text[pos : self.mark])
+            if not self.hasSelectedText(): # show selection if no highlight
+                #self.setCursorPosition(self.mark)
+                self.setSelection(pos, self.mark - pos)
+                self.repaint()
+                time.sleep(0.1)
+                self.setCursorPosition(pos)
 
-            self._complete(result, pre)
-        return 'break'
-
-    def _complete(self, result, pre):
-        n = len(result)
-        start = len(pre)
-        if n > 1:
-            prefix = self.longest_common_prefix(result, start)
-            if len(prefix) > start:
-                self.input.insert('insert', prefix[start:])
-                self.adjust_xview()
-            self.popup.update_data(DataComplete(result, len(prefix)))
-        elif n == 1:
-            self.insert_one_greedy(result[0][0], start)
-        else:
-            self.popup.quit()
-
-    def longest_common_prefix(self, result, start):
-        n = len(result)
-        min_idx, max_idx = 0, n - 1
-        for i in range(1, n): # n not n - 1
-            if result[i][1] != result[i - 1][1]:
-                if result[i - 1][0] > result[max_idx][0]:
-                    max_idx = i - 1
-                if result[i][0] < result[min_idx][0]:
-                    min_idx = i
-        min_res, max_res = result[min_idx][0], result[max_idx][0]
-        n = min(len(min_res), len(max_res))
-        for i in range(start, n):
-            if min_res[i] < max_res[i]:
-                return min_res[:i]
-        return min_res[:n]
-
-    def insert_one_greedy(self, data, start):
-        """
-        Greedy tail match completion and inserting
-
-        for example:
-        ~/packages/em(cursor here, then Tab).org
-        should to ~/packages/emacs.org, rather than ~/packages/emacs.org.org
-
-        ba(cursor here, then Tab)u hello -> baidu (cursor here)hello
-        """
-        content = self.input.get()
-        pos_cur = self.pos_cur
-        data = data[start:]
-
-        # space will not occur in keyword
-        # a directory or file can endswith space
-
-        # two case [non-greedy, greedy] should insert or not
-        insert_blank = [content[pos_cur:pos_cur+1] != ' ', True]
-        tail = content[pos_cur:]
-        is_keyword = True
-        if content.startswith('~/') or content.startswith('/'):
-            is_keyword = False
-            for i, c in enumerate(tail):
-                if c == '/' or (PLATFORM == 'Windows' and c == '\\'):
-                    tail = tail[:i] + '/'
-                    break
-        else:
-            for i, c in enumerate(tail):
-                if c == ' ':
-                    insert_blank[1] = False
-                    tail = tail[:i]
-                    break
-
-        self.popup.quit()
-        if tail and data.endswith(tail):
-            self.input.insert(pos_cur, data[:-len(tail)])
-            self.input.icursor(pos_cur + len(data))
-            insert_blank = insert_blank[1]
-        else:
-            self.input.insert(pos_cur, data)
-            insert_blank = insert_blank[0]
-
-        if is_keyword:
-            if insert_blank:
-                self.input.insert('insert', ' ')
+    @kill
+    def cut(self):
+        if self.mark is not None: # must not None
+            pos = self.cursorPosition()
+            self.setSelection(pos, self.mark - pos)
+            self.killed = self.selectionLength()
+            if self.mark > pos:
+                self.clipboard_append(self.selectedText())
             else:
-                self.input.icursor(pos_cur + len(data) + 1)
-        self.adjust_xview()
+                self.clipboard_appendleft(self.selectedText())
+            self.backspace()
+        else:
+            self.clipboard.clear()
 
-    def key_press(self, event):
-        """NOTE: character won't be inserted unless the function is finished"""
-        if is_inserting(event):
-            self.input.insert('insert', event.char)
-            self.adjust_xview()
-            if self.selected:
-                self.unselect()
-            self.previous = 'insert'
-            if self.popup.total:
-                if isinstance(self.popup.data, DataComplete):
-                    result = []
-                    _from = self.popup.data._from
-                    for row in self.popup.data:
-                        if row[0][_from:_from+1] == event.char:
-                            result.append(row)
-                    if not result:
-                        self.popup.quit()
-                    elif len(result) == len(self.popup.data):
-                        self.popup.data._from += 1
-                    else:
-                        self.popup.update_data(DataComplete(result, _from + 1))
-                else:
-                    self.popup.quit()
-            return 'break'
+    @save_unselect_and_quit
+    def paste(self):
+        self.mark = self.cursorPosition()
+        self.insert(self.clipboard.text())
 
-    def run(self, event):
-        ret = self._run(event)
-        self.previous = 'run'
-        if ret == 'hold':
+    # "yank": "M+y" # no need? kill ring is too complex!
+
+    @unique
+    def undo(self):
+        if self.pre_action != 'undo':
+            self.state_idx = len(self.states) - 1
+            self.save_state_if_needed()
+            self.unselect()
+
+        if self.state_idx > 0:
+            self.state_idx -= 1
+            self.states.append(self.states[self.state_idx])
+            self.positions.append(self.positions[self.state_idx])
+            self.setText(self.states[-1])
+            self.setCursorPosition(self.positions[-1])
+            self.mark = None # if not, too complex
+
+
+########################################################################
+# Label, message
+########################################################################
+class Label(QPushButton):#QLabel):#
+    def __init__(self, master):
+        super().__init__(master)
+        self.setHidden(True)
+        self.setEnabled(False)
+        self.setFont(FONT_MAIN)
+        self.master = master
+
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        self.setStyleSheet(THEME.get('message_style', ''))
+        self.setFixedWidth(self.master.app_width)
+
+        # self.setContentsMargins(5, 0, 5, 0) # did not work!
+        # self.setWordWrap(True) # prefer controlling '\n' by self
+
+        self.timer = QTimer()
+        self.timer.setInterval(100)
+        self.timer.timeout.connect(self.quit)
+
+    def quit(self):
+        self.setHidden(True)
+        self.adjustSize()
+        self.master.adjustSize()
+        self.timer.stop()
+
+    def update_data(self, msg):
+        self.setText(msg.text)
+        self.setHidden(False)
+        self.adjustSize()
+        self.master.adjustSize()
+        if msg.action == 'hide':
+            self.timer.start(int(msg.ms)) # <=0 means
+        elif msg.action == 'kill':
+            self.master.quit()
+        else:
             pass
-        elif ret == 'destroy':
-            self._destroy()
-        elif isinstance(ret, Data) and len(ret):
-            self.popup.update_data(ret)
-        elif isinstance(ret, Message):
-            self.show_message(ret)
+
+
+########################################################################
+# DataComplete
+########################################################################
+class DataComplete(Data):
+    def __init__(self, typ, data, hl_cur=0):
+        super().__init__(data, hl_cur)
+        self.typ = typ # {'key', 'dir'}
+
+    def run(self, app, hl_cur):
+        if self.typ == 'keyword':
+            app.complete_insert(
+                self.data[hl_cur].get('main', '')[app.trie_last['lv']:] + ' ')
+        elif self.typ == 'path':
+            app.complete_insert(self.data[hl_cur].get('real', ''))
+
+
+class DataActivate(Data):
+    def run(self, app, idx):
+        app.screen.activate_window_safely(self.data[idx][-1])
+        return 'destroy' if len(self.data) == 1 else 'hold'
+
+
+class DataClose(Data):
+    def run(self, app, idx):
+        screen = app.screen
+        screen.activate_window_safely(self.data[idx][-1])
+        try:
+            screen.close_window(slf.data[idx][-1])
+        except:
+            pass
+        else:
+            screen.activate_window_safely(screen.current_window)
+        if len(self.data) == 1:
+            return 'destroy'
+        self.data = self.data[:idx] + self.data[idx+1:]
+        self.hl_cur = min(len(data) - 1, app.popup.hl_cur)
+        return self
+
+
+class KeyTrie:
+    """
+    space for time, slow build, fast complete
+    value: {'Keyword': '', 'Type': '', ...}
+    """
+    def __init__(self, master):
+        self.master = master
+        self._dict = {'all': [], 'key': None, 'lv': 0}
+
+    def __contains__(self, word):
+        return '#' in self.startswith(word)
+
+    def startswith(self, word):
+        _dict = self._dict
+        for w in word:
+            if w not in _dict:
+                return {}
+            _dict = _dict[w]
+        return _dict
+
+    def _update_nxt(self, dct, w):
+        # NOTE: next character, '' means >1
+        if dct['nxt'] is None:
+            dct['nxt'] = w
+        elif dct['nxt'] != '' and dct['nxt'] != w:
+            dct['nxt'] = ''
+
+    def insert(self, word, value):
+        _dict = self._dict
+        for i, w in enumerate(word):
+            if w not in _dict:
+                _dict[w] = {'all': [], 'nxt': None, 'lv': i + 1}
+            _dict['all'].append(value)
+            self._update_nxt(_dict, w)
+            _dict = _dict[w]
+        self._update_nxt(_dict, '')
+        _dict['#'] = value
+        _dict['all'].append(value)
+
+    def inserts(self, lst):
+        for key, val in lst:
+            self.insert(key, val)
+
+    def complete(self, prefix, last_dict=None):
+        _dict = last_dict or self._dict
+        lv = _dict['lv']
+        for w in prefix:
+            if w not in _dict:
+                return '', None
+            _dict = _dict[w]
+        if len(_dict['all']) == 1:
+            return _dict['all'][0]['Keyword'][lv + len(prefix):] + ' ', None
+        ret = []
+        while _dict['nxt']:
+            ret.append(_dict['nxt'])
+            _dict = _dict[_dict['nxt']]
+        return ''.join(ret), _dict
+
+    def clear(self):
+        self._dict = {'all': [], 'nxt': None, 'lv': 0}
+
+
+########################################################################
+# App
+########################################################################
+class Travel(QWidget):
+    def __init__(self, screen):
+        super().__init__()
+        self.screen = screen
+        desktop = QApplication.desktop()
+        self.dw = desktop.width()
+        self.dh = desktop.height()
+        self.dx = self.dw // 75 # for window move
+        self.dy = self.dh // 75 # for window move
+        # self.setGeometry(self.dw // 4, self.dh >> 2, self.dw >> 1, 1)
+        self.setGeometry(self.dw // 4, self.dh >> 2, 0, 0)
+
+        self.app_width = self.dw >> 1
+
+        self.setWindowTitle('kuma')
+        self.setStyleSheet(THEME.get('global_style', ''))
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        # self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # self.setMinimumWidth(self.dw >> 1)
+        # self.setMaximumWidth(self.dw * 3 // 4)
+
+        self.input = Input(self)
+        self.popup = Popup(self)
+        #self.rows = self.popup.rows
+        self.label = Label(self)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.input)
+        layout.addWidget(self.popup)
+        layout.addWidget(self.label)
+        layout.setSpacing(0) # between input and popup
+        self.setLayout(layout)
+
+        self.shortcuts = {}
+        self.bind_shortcuts()
+
+        self.config_mtime = 0
+        self.config_file = os.path.join(PATH, 'config.json')
+        self.trie = KeyTrie(self)
+        self.trie_last = None
+        self.load_config()
+
+        self.disks = []#set()
+        if PLATFORM == 'Linux':
+            self.open_file_cmd = self.open_dir_cmd = 'xdg-open'
+        elif PLATFORM == 'Windows':
+            self.open_file_cmd = 'call'
+            self.open_dir_cmd = 'start'
+
+            for c in 'CDEFGHIJKLMNOPQRSTUVWXYZ':
+                temp = '{}:/'.format(c)
+                if os.path.isdir(temp):
+                    self.disks.append(temp)
+
+        elif PLATFORM == 'Darwin':
+            self.open_file_cmd = self.open_dir_cmd = 'open'
+        else:
+            raise Exception('Unsupport Platform: {}'.format(PLATFORM))
+
+        self.running = True
+
+    @property
+    def is_completing(self):
+        return self.popup and isinstance(self.popup.data, DataComplete)
+
+    def load_config(self):
+        mt = os.path.getmtime(self.config_file)
+        if self.config_mtime != mt:
+            self.trie.clear()
+            self.trie_last = None
+            with open(self.config_file, 'rt', encoding='utf-8') as f:
+                config = json.load(f)
+            keyword_set = set()
+            for typ, lst in config.items():
+                temp = []
+                for dct in lst:
+                    if PLATFORM not in dct.get('Platform', PLATFORM):
+                        continue
+                    if 'Keyword' not in dct:
+                        return self.show_message('No Keyword!')
+                        #raise Exception('No Keyword!')
+                    dct['Type'] = typ
+                    key = dct['Keyword']
+                    if key in keyword_set:
+                        return self.show_message(
+                            'Make sure the keywords are unique!')
+                        #raise Exception('Make sure the keywords are unique!')
+                    keyword_set.add(key)
+                    temp.append([key, dct])
+                self.trie.inserts(sorted(temp))
+            self.config_mtime = mt
+
+    def hide_popup(self):
+        self.popup.quit()
+
+    def eventFilter(self, source, event):
+        #if event.key() ==
+        if event.type() == QEvent.ShortcutOverride:
+            sequence = QKeySequence(int(event.modifiers()) + event.key())
+            if sequence in self.shortcuts:
+                # self.shortcuts[sequence]() # add this, will call twice
+                return True # just like tk's "break"?
+        elif event.type() == QEvent.KeyPress:
+            text = event.text()
+            if text:
+                self.input.keyboard_insert(text)
+                return True
+        # elif event.type() == QEvent.UpdateRequest:
+        #     if self.input.selected:
+        #         self.input.select()
+        return super().eventFilter(source, event)
+
+    def _bind_ks(self, ks, func, kind='shortcut'):
+        if kind == 'shortcut':
+            temp = QShortcut(QKeySequence(ks), self)
+            #, context=Qt.ApplicationShortcut)
+            temp._func = func
+            # try:
+            #     temp.disconnect() # useless for QLineEdit standard keybinding
+            # except TypeError:
+            #     pass
+            temp.activated.connect(func)#, type=Qt.UniqueConnection)
+            key = temp.key()
+        else:
+            temp = QAction(self) # this way, function carry an event parameter
+            temp.setShortcut(ks)
+            # try:
+            #     temp.disconnect() # useless for QLineEdit standard keybinding
+            # except TypeError:
+            #     pass
+            temp.triggered.connect(func)
+            self.addAction(temp)
+            key = temp.shortcut()
+            func = temp.trigger
+        assert key not in self.shortcuts
+        self.shortcuts[key] = func
+        return temp
+
+    def bind_shortcuts(self):
+        self.shortcuts_for_human = OrderedDict()
+        for comp, dct in load_json('shortcuts.json').items():
+            obj = self.__dict__.get(comp, self)
+            for func, ks in dct.items():
+                if func in obj.__class__.__dict__:
+                    self.__dict__['sc_{}'.format(func)] = self._bind_ks(
+                        ks, functools.partial(
+                            obj.__class__.__dict__[func], obj))
+                    self.shortcuts_for_human[ks] = func
+        self.sc_Return = self._bind_ks('Return', self.run)
+        self.sc_Enter = self._bind_ks('Enter', self.run) # 小键盘
+        self.sc_Tab = self._bind_ks('Tab', self.complete)
+
+    def quit(self):
+        if not self.isHidden():
+            self.input.quit()
+            self.popup.quit()
+            self.setHidden(True)
+
+    def _show(self):
+        self.setHidden(False)
+        self.activateWindow()
+        self.input.clearFocus()
+        self.input.setFocus(Qt.MouseFocusReason)
+        self.show()
+        print('exit _show()')
+
+    def dummy(self):
+        """Bind shortcuts your want to disable"""
+        pass
+
+    def move_window(self, dx=0, dy=0):
+        rect = self.geometry()
+        if dx:
+            rect.setX(rect.x() + dx)
+        if dy:
+            rect.setY(rect.y() + dy)
+        self.setGeometry(rect)
+        self.adjustSize()
+
+    def window_up(self):
+        self.move_window(dy=-self.dy)
+
+    def window_down(self):
+        self.move_window(dy=self.dy)
+
+    def window_left(self):
+        self.move_window(dx=-self.dx)
+
+    def window_right(self):
+        self.move_window(dx=self.dx)
+
+    def show_message(self, msg):
+        if isinstance(msg, str):
+            msg = Message(msg)
+        self.label.update_data(msg)
+
+    def complete(self):
+        self.pre_action = 'tab'
+        if self.popup:
+            self.popup.run()
+            self.popup.quit()
+        else:
+            text = self.input.get_text_before_cursor()
+            if self.is_path(text):
+                self.trie_last = None
+                self.complete_path(text)
+            else:
+                self.complete_keyword(text)
+
+    def is_path(self, text):
+        return re_path.match(text)
+
+    def complete_path(self, text):
+        i0 = self.input.cursorPosition()
+        if PLATFORM == 'Windows':
+            if text == '/':
+                data = [{'left': 'D', 'main': '/' + d, 'real': d} for d in self.disks]
+                self.popup.update_data(DataComplete('path', data))
+                return
+            elif text.startswith('/'):
+                text = text[1:]
+                i0 -= 1
+            if len(text) == 1:
+                if text.upper() + ':/' in self.disks:
+                    self.complete_insert(':/')
+                self.popup.quit()
+                return
+            elif len(text) == 2 and text[-1] == ':':
+                text += '/'
+
+        if text.startswith('~'):
+            home = os.path.expanduser('~')
+            i0 += len(home) - 1
+            text = home + text[1:]
+        else:
+            home = ''
+        if os.path.isdir(text) and os.path.split(text)[1] not in {'.', '..'}:
+            # NOTE: ~/. is a dir ..
+            base, prefix = text, ''
+        else:
+            base, prefix = os.path.split(text)
+
+        dirs, prefix = self.listdir(base, prefix)
+        if not dirs:
+            self.popup.quit()
+        elif len(dirs) == 1:
+            self.complete_insert(os.path.join(base, dirs[0])[i0:])
+            self.popup.quit()
+        else:
+            short = '~' + base[len(home):] if home else base
+            if len(short) > 20:
+                short = os.path.join('...', os.path.split(base)[1])
+                # 太长的话, 只显示两层? 之前用 .../ 表示
+            data = []
+            lp = len(prefix)
+            hl_cur = 0
+            for i, d in enumerate(dirs):
+                real = d[lp:]
+                if not real:
+                    hl_cur = i
+                data.append({'left': 'D' if d.endswith('/') else '-',
+                             'main': os.path.join(short, d),
+                             'real': real})
+            self.complete_insert(os.path.join(base, prefix)[i0:])
+            self.popup.update_data(DataComplete('path', data, hl_cur))
+
+    def longest_common_prefix(self, lst):
+        if not lst:
+            return ''
+        elif len(lst) == 1:
+            return lst[0]
+        ret = []
+        for c1, c2 in zip(lst[0], lst[-1]): # NOTE: lst is sorted
+            if c1 == c2:
+                ret.append(c1)
+            else:
+                break
+        return ''.join(ret)
+
+    def listdir(self, dirname, prefix=''):
+        for root, dirs, files in os.walk(dirname):
+            if prefix:
+                dirs = [d + '/' for d in dirs if d.startswith(prefix)]
+                files = [d for d in files if d.startswith(prefix)]
+            else:
+                dirs = [d + '/' for d in dirs]
+            if dirs:
+                prefix = self.longest_common_prefix(dirs)
+                if files:
+                    prefix = self.longest_common_prefix([
+                        prefix,
+                        self.longest_common_prefix(files)])
+            else:
+                prefix = self.longest_common_prefix(files)
+            return sorted(dirs) + sorted(files), prefix
+        return [], ''
+
+    def complete_keyword(self, text, renew=True):
+        self.load_config()
+        if renew:
+            self.trie_last = None
+        insert, dct = self.trie.complete(text, self.trie_last)
+        self.complete_insert(insert)
+        self.trie_last = dct
+        if dct is None:
+            self.popup.quit()
+        else:
+            data = []
+            for dct in dct['all']:
+                data.append({'left': dct.get('Type', ''),
+                             'main': dct.get('Keyword', ''),
+                             'desc': (dct.get('Description')
+                                      or dct.get('Pattern')
+                                      or dct.get('Command', ''))})
+            self.popup.update_data(DataComplete('keyword', data))
+
+    def complete_insert(self, insert):
+        self.input.complete_insert(insert)
+
+    def run(self):
+        action = self._run()
+        self.pre_action = 'run'
+        if action == 'hold':
+            pass
+        elif action == 'destroy':
+            self.quit()
+        elif isinstance(action, Data) and len(action):
+            self.popup.update_data(action)
+        elif isinstance(action, Message):
+            self.show_message(action)
         else:
             self.popup.quit()
-        return 'break'
 
-    def _run(self, event):
-        if self.popup.total:
+    def _run(self):
+        if self.popup:
             return self.popup.run()
 
-        cmd = self.input.get().rstrip(' ')
-        if not cmd:
-            return self.screen.activate('') # 'hold'
-
-        is_a_path = cmd[0] == '/'
-        if PLATFORM == 'Windows' and cmd[0] == '/':
-            cmd = cmd[1:]
-        if cmd.startswith('~/'):
-            is_a_path = True
-            cmd = os.path.expanduser(cmd)
-        if os.path.isdir(cmd) or os.path.isfile(cmd):
-            func = open_command[PLATFORM]
-            if PLATFORM == 'Windows':
-                # It's strange that only shell True is right
+        text = self.input.text()
+        if self.is_path(text):
+            shell = True if PLATFORM == 'Windows' else False
+            if text.startswith('~'):
+                text = os.path.expanduser(text)
+            if os.path.isdir(text):
                 return self._subprocess_popen(
-                    [func[os.path.isdir(cmd)], cmd], shell=True)
+                    [self.open_dir_cmd, text], shell=shell)
+            elif os.path.isfile(text):
+                return self._subprocess_popen(
+                    [self.open_file_cmd, text], shell=shell)
             else:
-                return self._subprocess_popen([func, cmd], shell=False)
+                return self.complete_path(text[:self.input.cursorPosition()])
 
-        if is_a_path:
-            return Message('Invalid path!')
-
-        keyword, *params = cmd.split(' ', maxsplit=1)
-        self.load_keywords()
-        if keyword not in self.kv_dict:
-            pre = cmd
-            i = bisect.bisect_left(self.keywords, pre)
-            result = []
-            while i < self.nkeyword:
-                if not self.keywords[i].startswith(pre):
-                    break
-                result.append(self.kv_list[i])
-                i += 1
-            if not result:
-                return self.screen.activate(cmd)
-                # return Message('Unknown keyword: {}!'.format(keyword))
-            result.sort(key=lambda x: x[1]) # stable sort
-            self.input.delete(0, self.pos_end)
-            self.input.insert(0, pre)
-            self._complete(result, pre)
-            return 'hold'
+        text = text.rstrip()
+        if ' ' in text:
+            key, args = text.split(' ', 1)
         else:
-            params = params[0].strip() if params else ''
-            typ, reg, val = self.kv_dict[keyword]
-            typ.capitalize()
-            if typ == '~':
-                if keyword == 'activate':
-                    return self.screen.activate(params)
-                elif keyword == 'close':
-                    return self.screen.close(params)
+            key, args = text, ''
+        dct = self.trie.startswith(key)
+        if dct:
+            if '#' in dct:
+                dct = dct['#']
+                typ = dct['Type']
+                if typ == 'Web':
+                    return self._get_url(dct['Command'], args)
+                elif typ == 'App':
+                    return self._activate_or_open(key, args, dct)
+                elif typ == 'Py':
+                    return self._run_workflow(key, args)
+                elif typ == 'Sp':
+                    return self._process_sp(key, args)
                 else:
-                    return Message(
-                        'Unimplemented built-in keyword: {}!'.format(keyword))
-            elif typ == 'Web':
-                webbrowser.open_new_tab(val.format(params))
-                return 'destroy'
-                # # NOTE: choose following ways you like
-                # webbrowser.open('http://www.python.org')
-                # webbrowser.open_new('http://www.python.org')
-                # webbrowser.open_new_tab('http://www.python.org')
-                # c = webbrowser.get('firefox')
-                # c.open('http://www.python.org')
-                # c.open_new_tab('http://docs.python.org')
-            elif typ == 'App':
-                if (params[:5].lower() == 'close'
-                    or params[:4].lower() == 'kill'):
-                    for pattern in [reg, keyword]:
-                        if pattern:
-                            ret = self.screen.close(pattern)
-                            if not isinstance(ret, Message):
-                                return ret
-                    return ret
-                elif params[:3].lower() == 'new':
-                    return self._subprocess_popen(
-                        '{} {}'.format(val, params[3:]), shell=True)
-
-                for pattern in [reg, cmd]:
-                    if pattern:
-                        ret = self.screen.activate(pattern)
-                        if not isinstance(ret, Message):
-                            return ret
-                return self._subprocess_popen(
-                    '{} {}'.format(val, params), shell=True)
-            elif typ == 'Py':
-                dct = {}
-                try:
-                    exec('from workflow_{} import main'.format(keyword), dct)
-                except Exception as e:
-                    return Message(repr(e))
-                return dct['main'](params)
+                    return self.show_message(
+                        'Unknown keyword type: {}!'.format(typ))
             else:
-                return Message('Unknown type: {}!'.format(typ))
+                self.input.setCursorPosition(len(key))
+                self.complete_keyword(key)
+        else:
+            self.show_message('Unknown keyword!')
+
+    def _get_url(self, cmd, args):
+        sp = args.rsplit(' ', 1)[-1].lower()
+        if sp == '-c':
+            webbrowser.get('google-chrome').open_new_tab(cmd.format(args[:-3]))
+        elif sp == '-f':
+            webbrowser.get('firefox').open_new_tab(cmd.format(args[:-3]))
+        else:
+            webbrowser.open_new_tab(cmd.format(args))
+        return 'destroy'
+
+    def _activate_or_open(self, key, args, dct):
+        cmd = dct['Command']
+        if args.rsplit(' ', 1)[-1].lower() == 'new':
+            return self._subprocess_popen(
+                '{} {}'.format(cmd, args[:-4]), shell=True)
+        for pattern in [dct.get('Pattern', ''), key]:
+            if pattern:
+                ret = self.screen.activate(pattern)
+                if not isinstance(ret, Message):
+                    return ret
+        return self._subprocess_popen(
+            '{} {}'.format(cmd, args), shell=True)
+
+    def _run_workflow(self, key, args):
+        dct = {}
+        try:
+            exec('from workflow_{} import main'.format(key), dct)
+        except Exception as e:
+            return Message(repr(e))
+        return dct['main'](args)
+
+    def _process_sp(self, key, args):
+        if key == 'activate':
+            return self.screen.activate(args)
+        elif key == 'close':
+            return self.screen.close(args)
+        elif key == 'toggle-search-engine':
+            self.search_engine ^= 1
+            return Message('{} is used!'.format(self.search_engine_name),
+                           ms=250)
+        elif key == 'shortcuts':
+            return Data([{'left': ks, 'main': func}
+                         for ks, func in self.shortcuts_for_human.items()])
+        else:
+            return Message('Unimplemented sp-keyword: {}!'.format(key))
 
     def _subprocess_popen(self, cmd, shell):
         p = subprocess.Popen(cmd, shell=shell, start_new_session=True,
@@ -913,295 +1291,16 @@ class Travel(tk.Frame):
             err = ''
 
         if PLATFORM == 'Linux':
-            subprocess.call(['kill', str(p.pid)]) # kill sh -c ... process
-
+            pass
+            #subprocess.call(['kill', str(p.pid)]) # kill sh -c ... process
         if err:
             return Message(err.strip())
         else:
             return 'destroy'
 
-    @move
-    def forward_char(self, event):
-        self.input.icursor(min(self.pos_end, self.pos_cur + 1))
-
-    @move
-    def backward_char(self, event):
-        self.input.icursor(max(0, self.pos_cur - 1))
-
-    def get_previous_word_position(self):
-        pos = self.pos_cur - 1
-        content = self.input.get()
-        pre = None
-        while pos >= 0:
-            typ = get_char_type(content[pos])
-            if pre is None:
-                if typ is not None:
-                    pre = typ
-            else:
-                if typ != pre:
-                    return pos + 1
-            pos -= 1
-        return 0
-
-    def get_next_word_position(self):
-        pos = self.pos_cur
-        content = self.input.get()
-        pre = None
-        n = len(content)
-        while pos < n:
-            typ = get_char_type(content[pos])
-            if pre is None:
-                if typ is not None:
-                    pre = typ
-            else:
-                if typ != pre:
-                    return pos
-            pos += 1
-        return n
-
-    @move
-    def forward_word(self, event):
-        pos = self.get_next_word_position()
-        self.input.icursor(pos)
-
-    @move
-    def backward_word(self, event):
-        pos = self.get_previous_word_position()
-        self.input.icursor(pos)
-
-    @move
-    def move_beginning_of_line(self, event):
-        self.input.icursor(0)
-
-    @move
-    def move_end_of_line(self, event):
-        self.input.icursor(self.pos_end)
-
-
-    @kill
-    def delete_char(self, event):
-        self.input.delete(self.pos_cur)#, self.pos_cur + 1)
-
-    @kill
-    def backward_delete_char(self, event):
-        self.input.delete(self.pos_cur - 1)#, self.pos_cur)
-
-    @kill
-    def kill_word(self, event):
-        pos_cur = self.pos_cur
-        pos = self.get_next_word_position()
-        content = self.input.get()[pos_cur:pos]
-        self.input.delete(pos_cur, pos)
-        self.clipboard_append(content)
-
-    @kill
-    def backward_kill_word(self, event):
-        """M-DEL"""
-        pos_cur = self.pos_cur
-        pos = self.get_previous_word_position()
-        content = self.input.get()[pos:pos_cur]
-        self.input.delete(pos, pos_cur)
-        self.clipboard_append_left(content)
-
-    @kill
-    def kill_line(self, event):
-        content = self.input.get()[self.pos_cur:]
-        self.input.delete(self.pos_cur, self.pos_end)
-        self.clipboard_append(content)
-
-    @kill
-    def backward_kill_line(self, event):
-        """Emacs no such function"""
-        content = self.input.get()[:self.pos_cur]
-        self.input.delete(self.pos_cur, self.pos_end)
-        self.clipboard_append_left(content)
-
-    def set_mark(self, event):
-        """Break continuous undo and kill"""
-        self.mark = self.pos_cur
-        self.selected = True
-        self.input.selection_clear()
-        self.previous = 'set_mark'
-        return 'break'
-
-    def exchange_point_and_mark(self, event):
-        """Only break continuous kill, not undo"""
-        if self.mark is not None:
-            pos_cur = self.pos_cur
-            self.selected = True
-            if self.mark != pos_cur:
-                self.input.icursor(self.mark)
-                self.mark = pos_cur
-                self.select()
-                if self.previous == 'kill':
-                    self.previous = 'exchange'
-        return 'break'
-
-    def select_all(self, event):
-        self.mark = self.pos_end
-        self.input.icursor(0)
-        self.selected = True
-        self.input.selection_range(0, self.mark)
-        self.previous = 'select_all'
-        return 'break'
-
-    def select_all_and_cut(self, event):
-        self.select_all(event)
-        return self.cut(event)
-
-    # mark word? (maybe something like M-h)
-
-    @save_unselect_and_quit
-    def transpose_chars(self, event):
-        pos_cur = self.pos_cur
-        if pos_cur != 0:
-            pos_end = self.pos_end
-            content = self.input.get()
-            if pos_cur == pos_end:
-                if pos_cur == 1:
-                    self.input.icursor(0)
-                else:
-                    self.input.delete(pos_cur - 2, pos_cur)
-                    self.input.insert('insert', content[-2:][::-1])
-            else:
-                self.input.delete(pos_cur - 1, pos_cur + 1)
-                self.input.insert('insert', content[pos_cur-1:pos_cur+1][::-1])
-        return 'break'
-
-    @save_unselect_and_quit
-    def copy(self, event):
-        """
-        NOTE: emacs's implemention is too hard (when highlight is invisible,
-        run self.copy, you will see cursor appear on the mark few second,
-        but the cursor's actual position is not changed and you can
-        interrupt this by using any command)
-
-        extreme case: copy two times
-        so self.copy is not in continuous kill
-
-        NOTE: I tryed to implement a splash highlight (use time.sleep(0.1)),
-        but it seems redrawing only happens when a function is finished
-        """
-        if self.mark is not None:
-            pos_cur = self.pos_cur
-            if pos_cur > self.mark:
-                content = self.input.get()[self.mark:pos_cur]
-            elif pos_cur < self.mark:
-                content = self.input.get()[pos_cur:self.mark]
-            else:
-                return
-            self.input.clipboard_clear()
-            self.input.clipboard_append(content)
-
-    def cut(self, event):
-        """Same with self.copy, not in continuous kill"""
-        if self.mark is not None:
-            self.copy(event)
-            self.input.delete(*sorted((self.mark, self.pos_cur)))
-
-    @save_unselect_and_quit
-    def paste(self, event):
-        self.mark = self.pos_cur
-        self.input.insert(self.mark, self.input.clipboard_get())
-
-    def undo(self, event):
-        if self.previous != 'undo':
-            self.idx = len(self.states) - 1
-            self.save_state_if_needed()
-            if self.selected:
-                self.unselect()
-
-        if self.idx > 0:
-            self.idx -= 1
-
-            # if self.states[-1] != self.states[self.idx]: # seems useless
-            self.states.append(self.states[self.idx])
-            self.positions.append(self.positions[self.idx])
-            self.input.delete(0, self.pos_end)
-            self.input.insert(0, self.states[-1])
-            self.input.icursor(self.positions[-1])
-
-            self.mark = None
-            self.previous = 'undo'
-        return 'break'
-
-    def adjust_xview(self):
-        start, end = map(lambda x: int(x * self.pos_end), self.input.xview())
-        pos_cur = self.pos_cur
-        if pos_cur < start or pos_cur >= end:
-            self.input.xview('insert')
-
-    def load_keywords(self):
-        """
-        Lazy load
-
-        I use emacs's org-mode table to organize keywords and values,
-        (keyword, type, ..., real command)
-        """
-        mt = os.path.getmtime(self.keyword_file)
-        if self.keyword_mtime != mt:
-            self.keyword_mtime = mt
-            self.kv_list = []
-            self.kv_dict = {}
-            with open(self.keyword_file, encoding='utf-8') as f:
-                f.readline() # exclude title (the first line)
-                for line in f:
-                    temp = line.split('|')[1:-1]
-                    if len(temp) > 1:
-                        temp = [w.strip() for w in temp]
-                        if temp[-2] == '' or PLATFORM in temp[-2]:
-                            self.kv_list.append(temp[:3])
-                            self.kv_dict[temp[0]] = temp[1::2]
-            self.kv_list.sort()
-            self.kv_list_sorted_by_type = sorted(
-                self.kv_list, key=lambda x: x[1])
-            self.keywords = [kv[0] for kv in self.kv_list]
-            self.nkeyword = len(self.keywords)
-
-    def _destroy(self):
-        if not self.is_hidden:
-            self.is_hidden = True
-
-            self.states = ['']
-            self.positions = [0]
-            self.idx = 0
-
-            # self.kill_ring.clear()
-
-            self.previous = None
-
-            self.mark = None
-            self.unselect()
-
-            self.input.delete(0, self.pos_end)
-
-            self.popup.quit()
-
-            self.master.withdraw()
-
-    def _show(self):
-        root = self.master
-        if (not self.is_hidden) and PLATFORM == 'Linux':
-            # Linux will not lift to topmost sometimes
-            # I can only find withdraw first way to solve it
-            # withdraw after withdraw may influence the initial position
-            root.withdraw()
-        root.update()
-        root.deiconify()
-
-        # following is not enough in linux
-        root.lift()
-        root.attributes('-topmost', True)
-        root.attributes('-topmost', False)
-        self._topmost = False
-
-        self.input.focus_set()
-        self.is_hidden = False
-
-    def toggle_topmost(self, event):
-        self._topmost ^= True
-        self.master.attributes('-topmost', self._topmost)
-
+    def add_listener(self, hotkey_thread):
+        self.listener = hotkey_thread
+        self.listener._show.connect(self._show)
 
 
 class BaseScreen:
@@ -1220,8 +1319,7 @@ class BaseScreen:
             if ret:
                 return ret
             return [win for win in poss if pattern.search(win[2])]
-        else:
-            return poss
+        return poss
 
     @abstractmethod
     def get_windows(self):
@@ -1241,13 +1339,13 @@ class BaseScreen:
     def activate_window_safely(self, hw):
         try:
             self.activate_window(hw)
-        except Exception as e:
+        except:
             pass
 
     def close_window_safely(self, hw):
         try:
             self.close_window(hw)
-        except Exception as e:
+        except:
             pass
 
     def activate(self, pattern):
@@ -1258,10 +1356,6 @@ class BaseScreen:
             self.activate_window_safely(poss[0][-1])
             return 'destroy'
         else:
-            class DataActivate(Data):
-                def run(slf, app, idx):
-                    self.activate_window_safely(slf.data[idx][-1])
-                    return 'destroy' if len(slf.data) == 1 else 'hold'
             if PLATFORM == 'Windows':
                 return DataActivate(sorted(poss))
             return DataActivate(sorted(poss, key=lambda x: (x[:-1], x[-1].id)))
@@ -1275,39 +1369,53 @@ class BaseScreen:
                 self.close_window_safely(win[-1])
             return 'destroy'
         else:
-            class DataClose(Data):
-                def run(slf, app, idx):
-                    self.activate_window_safely(slf.data[idx][-1])
-                    try:
-                        self.close_window(slf.data[idx][-1])
-                    except Exception as e:
-                        pass
-                    else:
-                        self.activate_window_safely(self.current_window)
-
-                    if len(slf.data) == 1:
-                            return 'destroy'
-                    slf.data = slf.data[:idx] + slf.data[idx+1:]
-                    slf.init_ipage = app.popup.ipage
-                    slf.init_index = idx
-                    return slf
             return DataClose(sorted(poss))
 
 
-class LazyApp:
-    def __init__(self):
-        self.app = None
-        self.running = True
+def main(kuma, hotkey_thread):
+    kuma.add_listener(hotkey_thread)
+    app.installEventFilter(kuma)
+    if PLATFORM == 'Windows':
+        kuma.input.insert('shortcuts') # speed up the first boot
+        kuma.input.clear()
+        kuma._show()
+    #kuma.show()
+    #kuma.quit()
+    kuma.listener.start()
+    try:
+        __file__
+    except NameError:
+        if PLATFORM != 'Windows':
+            return
+    sys.exit(app.exec_())
 
-    def _show(self):
-        if self.app and self.running:
-            self.app._show()
 
-    def update(self, app):
-        self.app = app
+if __name__ == '__main__':
+
+    self = Travel(BaseScreen())
+    self.show()
+    app.installEventFilter(self)
+    #self.thread.start()
+
+# NOTE: use QThread and pyqtSignal instead of threading.Thread
+# NOTE: linux 下 fcitx 搞了半天, 都想换框架了
+# 网上的所有答案都不行, 比如: https://stackoverflow.com/questions/50077228/cant-use-fcitx-with-self-written-qt-app?r=SearchResults
+# 又有人说是软件源里的 fcitx-frontend-qt5 不支持更高的 pyqt5 版本了, 试着自己编译也遇到了各种问题, 最终卡在了 parse IID, 但后来一想, 我的 pyqt5 也是软件源里的, 不应该不支持才对
+# 但也因为, 搜以上的问题, 在 github 上找到了 QApplication.addLibraryPath. 既然如此看看当前的 path: app.libraryPaths(), ['/usr/local/lib/python3.8/dist-packages/PyQt5/Qt5/plugins', '/usr/bin'], 坑爹啊, 已经移到 /Qt5/ 了, 怪不得 /Qt/ 下都没有 plugins 文件夹
+# 看着最终效果, 真香, windows 下, 搜狗输入法的问题还要解决
 
 
+# DONE: TODO: inserting when selected
+# DONE: TODO: change input cursor's width
+# DONE? TODO: find a better delete way?
+# DONE: TODO: disable rightclick
+# DONE: TODO: 当 mark 在 cursor 之后, 输入字符需要把 mark 往后移, 删除同理, 如果删除包含了 mark, 那么新 mark 位于删除的最前面
+# DONW? TODO: cut 与 连续删除的关系
+# DONE: TODO: 中文输入法支持
 
-if False:
-    app = Travel()
-    root = app.master
+# TODO: shortcut for topmost?
+# TODO: 解除无用的快捷键, 防止误用
+
+        # # unbind default keybindings
+        # for e in self.input.event_info():
+        #     self.input.event_delete(e) # event_add to add

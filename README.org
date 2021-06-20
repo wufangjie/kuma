@@ -9,16 +9,16 @@
 3. Open file with default application
 4. Eval one line python code (advanced calculator)
 5. Your imagination
-NOTE: use space to seperate keyword and parameter
+NOTE: use space to seperate keyword and arguments
 
 ** Tricks
 1. Space is not supposed to occur in keyword, indeed I use it to recognize keyword, but you can use it for completion (for commonly used command)
-2. You can use "keyword new" to force kuma open a new application (if the command do) rather activate some window, "close" or "kill" to close
-3. When the popup have too many rows (> 2), try to press <Control-l>, see section "Emacs keybinding" below for detail
+2. You can use "keyword new" to force kuma open a new application (if the command do) rather activate one window
+3. When the popup have too many rows (> 2), try to press <Control-l>, see section "Emacs keybindings" below for detail
 
 ** Completion
 1. Keyword completion and path completion
-2. Path completion should start with ~/ or /, NOTE: Windows should do it too
+2. Path completion should start with ~/, / (also work for windows) or c:/(only for windows)
 3. Short keywords are too hard to remember, I think the whole word plus completion is better
 4. I think less used applications need not to be added to keyword's completions
 
@@ -30,18 +30,23 @@ See below
 2. Only implement exact prefix matching
 
 * Requirement
-Pure python implemention, python3 (with tkinter) is required
-** Linux
+** basic
++ python3
++ PyQt5
+
+** Linux sp
 1. python3-xlib is required, which may have been already installed by default
 2. xprop command line tool, which may have been already installed by default
 NOTE: xprop is included in x11-utils on ubuntu 18.04
 
-** Windows
+** Windows sp
 win32api
 
 NOTE: pip install may raise ImportError, please download exe from the following url:
 
 https://sourceforge.net/projects/pywin32/files/pywin32/
+
+or you can just install anaconda
 
 * Startup
 ** Linux
@@ -58,82 +63,35 @@ http://www.intowindows.com/how-to-add-apps-to-startup-in-windows-10/
 If you killed kuma by accident or kuma crashed, you can run travel_async_but_risky.py to restart kuma asynchronously
 NOTE: TODO: FIXME: not for windows yet, double click file may be your best way
 
-* About config.org
-Emacs's org-mode is good at table and rectangle operations, recommend to you
+* Custom
+** keywords
+see `config.json`
 
-config.org's format is strict unless you implement it yourself:
-0. First Line:    [Keyword, Type, Description, Pattern, Platform, Command]
-1. "Keyword":     must be unique in certain platform
-2. "Type":        must in {Web, App, Py}
-3. "Description": do not remove it even if it is empty
-4. "Pattern":     you can write a regular expression to match window's appname or title better, '' means use keyword instead
-5. "Platform":    must in {'', Windows, Linux, Darwin} or '{}+{}' form, '' means available on all platforms
-6. "Command":     Web command can have at most one parameter, App command will run as flat shell command + your additional parameter, Py for humanity
+NOTE:
+1. "Keyword" should be unique in certain platform
+2. "Pattern": you can write a regular expression to match window's appname or title better, '' means use keyword instead
+3. "Platform": must in {'', Windows, Linux, Darwin} or '{}+{}' form, '' means available on all platforms
 
-* Emacs keybinding
-** Tab
+** shortcuts
+see `shortcuts.json`
+
+*** Tab
 1. Complete
 2. Insert (if only one completion)
 3. Insert longest common prefix
-4. Greedy tail match completion (see travel.py insert_one_greedy function)
+4. Complete with the selected row (popup's)
 
-** Enter
+*** Enter
 1. Run command
 2. Select completion
-3. If command is not a path, not in keywords and is a prefix of some keywords, then complete
+3. Complete path or keywords when possible
 4. Run user-defined callback
 
-** Useful shortcuts (change state)
-| shortcut | effect                                                       |
-|----------+--------------------------------------------------------------|
-| Escape   | if popup exist quit it, or quit kuma                         |
-| C-g      | if popup exist quit it, or unhighlight input's selection     |
-| M-t      | toggle topmost, you may need kuma be in front of some window |
 
-** input entry movement, editing (continuous kill, continuous undo etc.)
-| function                | shortcut    |                 |
-|-------------------------+-------------+-----------------|
-| forward_char            | C-f         |                 |
-| backward_char           | C-b         |                 |
-| forward_word            | M-f         |                 |
-| backward_word           | M-b         |                 |
-| move_beginning_of_line  | C-a         |                 |
-| move_end_of_line        | C-e         |                 |
-| delete_char             | C-d         |                 |
-| backward_delete_char    | BackSpace   |                 |
-| kill_word               | M-d         |                 |
-| backward_kill_word      | M-BackSpace |                 |
-| kill_line               | C-k         |                 |
-| backward_kill_line      |             |                 |
-| set_mark                | C-space     |                 |
-| set_mark                | C-@         | for Windows     |
-| exchange_point_and_mark | C-x         | emacs's C-x C-x |
-| select_all              |             |                 |
-| select_all_and_cut      | M-h         |                 |
-| copy                    | M-w         |                 |
-| cut                     | C-w         |                 |
-| paste                   | C-y         |                 |
-| undo                    | C-/         |                 |
-| transpose_chars         | C-t         |                 |
+** theme
+see `theme.json`
 
-** popup data movement
-| function           | shortcut |
-|--------------------+----------+
-| next_page          | M-]      |
-| previous_page      | M-[      |
-| next_row           | C-n      |
-| previous_row       | C-p      |
-| end_of_data        | M->      |
-| beginning_of_data  | M-<      |
-| move_to_golden_row | C-l      |
-
-** window movement (24 pixels per press)
-| <Right> |
-| <Left>  |
-| <Down>  |
-| <Up>    |
-
-** Control-l (move_to_golden_row)
+*** move_to_golden_row
 #+BEGIN_EXAMPLE
 if a popup has 9 rows:
     if the highlighted row in the upper half:
@@ -154,3 +112,9 @@ See base.py and my two simple workflows for more details
 From one of the most popular cartoon "One Piece".
 
 Bartholomew Kuma, whose Devil Fruit ability can send people to any place easily, just like the thing I want my script do.
+
+* TODO:
+1. sometimes kuma will lose focus (for example, an application opened), setFocus not work properly?
+2. sogou input method on win10, not occur in the proper position (decay)
+3. default application size on different devices? (DONE?)
+4. complete without case sensetive

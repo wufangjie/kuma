@@ -6,9 +6,9 @@ import math
 from math import *
 
 
-def main(params):
+def main(args):
     try:
-        result = eval(params, globals())
+        result = eval(args, globals())
     except Exception as e:
-        return Message('eval("{}"): {}'.format(params, e))
-    return Message('eval("{}") = {}'.format(params, result), 5000)
+        return Message('Error: {}'.format(e))
+    return Message('= {}'.format(result), 5000)

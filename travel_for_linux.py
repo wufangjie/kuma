@@ -1,15 +1,17 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-from _travel import Travel, BaseScreen, LazyApp
+from _travel import Travel, BaseScreen, main
+from PyQt5.QtCore import pyqtSignal, QThread
 import Xlib
 from Xlib import X #, XK
 from Xlib.display import Display
 # from Xlib.protocol.event import KeyPress, KeyRelease, ClientMessage
-import time as T
-from threading import Thread
+#import time
+#from threading import Thread
 import subprocess
 import re
+#import sys
 
 
 reg_xid = re.compile(r'(0x[0-9a-f]+)')
@@ -21,11 +23,10 @@ TITLE = disp.intern_atom('_NET_WM_NAME')
 # NOTE: As far as I can see, CLASS is good enough
 
 
-
 def send_event(detail, state, root, display, child=X.NONE,
                same_screen=1, root_x=0, root_y=0, event_x=0, event_y=0):
     """This send event discourage me a lot"""
-    # time = int(T.time()) # X.CurrentTime
+    # time = int(time.time()) # X.CurrentTime
     # window = root # display.get_input_focus().focus
     # params = locals()
     # params.pop('display')
@@ -88,9 +89,8 @@ class LinuxScreen(BaseScreen):
         disp.sync()
 
 
-
 if __name__ == '__main__':
-    app = LazyApp()
+    kuma = Travel(LinuxScreen())
 
     display = Display()
     root = display.screen().root
@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
     def error_handler(*args, **kwargs):
         """I can not find a detailed document about Error Handling"""
-        app.running = False
+        kuma.running = False
 
     display.set_error_handler(error_handler)
 
@@ -123,89 +123,20 @@ if __name__ == '__main__':
     # I tryed onerror params, but did not work
     # error only happens when run display.next_event()
 
-    def listen():
-        try:
-            while True:
-                event = display.next_event()
-                # print(event.__dict__)
-                if not app.running:
-                    break
-                if event.type == 2:
-                    app._show()
-        finally:
-            for mod in mods:
-                root.ungrab_key(key, mod)
-            display.close()
+    class Listen(QThread):
+        _show = pyqtSignal(name='show')
 
+        def run(self):
+            try:
+                while True:
+                    event = display.next_event()
+                    if not kuma.running:
+                        break
+                    if event.type == 2:
+                        self._show.emit()
+            finally:
+                for mod in mods:
+                    root.ungrab_key(key, mod)
+                display.close()
 
-    t = Thread(target=listen)
-    t.start()
-    T.sleep(0.1)
-
-    if app.running:
-        # single kuma guranteed
-        app.update(Travel(LinuxScreen(), is_hidden=True))
-        app.app.mainloop()
-        app.running = False
-        disp.close()
-
-        # # close display can not terminate thread
-        # for mod in mods:
-        #     root.ungrab_key(key, mod)
-        # display.close()
-
-        # omit flush will not send event,
-        # but with flush will crash the whole input system
-        send_event(key, mods[0], root, display)
-
-        # T.sleep(1)
-        t.join()
-    else:
-        raise Exception(
-            'Key confliction detected, maybe another kuma is running')
-
-
-
-
-################################################################################
-# # abandon
-################################################################################
-
-# xprop -root _NET_CLIENT_LIST _NET_ACTIVE_WINDOW
-
-# xprop -id {} | grep -E "^(_NET_)?WM_(PID|CLASS|NAME)"'
-# xprop -id {} _WM_CLASS _NET_WM_NAME
-
-
-# display = Display()
-# root = display.screen().root
-# win = display.create_resource_object('window', 0x32000ab)
-
-
-# Send event
-
-# mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
-# # # should send to the root
-# # msg = ClientMessage(window=win,
-# #                     client_type=display.intern_atom('_NET_ACTIVE_WINDOW'),#'WM_DELETE_WINDOW'),
-# #                     data=(32, [1, 0, 0, 0, 0])) #int(T.time())
-
-
-# # should send to the root
-# msg = ClientMessage(window=win,
-#                     client_type=display.intern_atom('_NET_CLOSE_WINDOW'),#'WM_DELETE_WINDOW'),
-#                     data=(32, [int(T.time()), 1, 0, 0, 0])) #int(T.time())
-# display.send_event(root, msg)
-# display.flush()
-# display.sync()
-# # display.close()
-
-# display.send_event(root, msg)
-# display.flush()
-# display.sync()
-# # display.close()
-
-
-# for wid in [0x1400004, 0x1400026, 0x1600003, 0x32000ab, 0x5000025, 0xe55fa7, 0xe56b8c, 0x3000021, 0xe5e2d5]:
-#     print(wid)
-#     print(subprocess.check_output('xprop -id {} | grep -E "^(_NET_)?WM_(PID|CLASS|NAME)"'.format(wid), shell=True).decode('utf-8'))
+    main(kuma, Listen())

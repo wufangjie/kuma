@@ -1,4 +1,5 @@
-from _travel import Travel, BaseScreen, LazyApp
+from _travel import Travel, BaseScreen, main
+from PyQt5.QtCore import pyqtSignal, QThread
 import ctypes
 from ctypes import wintypes
 import win32gui
@@ -6,13 +7,12 @@ import win32con
 import win32com.client
 import win32process
 import win32api
-from threading import Thread
-import time as T
+#from threading import Thread
+#import time
 # import subprocess
+#import sys
 import os
 
-
-# FIXME: windows call emacs from kuma will not load .emacs
 
 # NOTE: kuma can not activate a minimized task manager or register...
 # It's a UIPI (User Interface Privilege Isolation) problem
@@ -114,9 +114,8 @@ class WindowsScreen(BaseScreen):
                 self.activate_window(hWnd)
 
 
-
 if __name__ == '__main__':
-    app = LazyApp()
+    kuma = Travel(WindowsScreen())
 
     byref = ctypes.byref
     user32 = ctypes.windll.user32
@@ -134,51 +133,28 @@ if __name__ == '__main__':
             win32con.VK_CONTROL, 0, win32con.KEYEVENTF_KEYUP, 0)
 
 
-    def listen():
-        # must register in the thread
-        # https://msdn.microsoft.com/en-us/library/ms646309.aspx
-        # some variable do not exist in win32con, for example VK_OEM_1
-        # you can check valid variables using following code:
-        # pprint([key for key in dir(win32con) if key.startswith('VK_')])
-        if not user32.RegisterHotKey(
-                None, lucky_id, win32con.MOD_CONTROL, lucky_key):
-            return send_hotkey()
-        try:
-            msg = wintypes.MSG()
-            while user32.GetMessageA(byref(msg), None, 0, 0) != 0:
-                if msg.message == win32con.WM_HOTKEY:
-                    app._show()
-                user32.TranslateMessage(byref(msg))
-                user32.DispatchMessageA(byref(msg))
-                if not app.running:
-                    break
-        finally:
-            user32.UnregisterHotKey(None, lucky_id)
+    class Listen(QThread):
+        _show = pyqtSignal(name='show')
 
-    t = Thread(target=listen)
-    t.start()
-    T.sleep(0.1)
+        def run(self):
+            # must register in the thread
+            # https://msdn.microsoft.com/en-us/library/ms646309.aspx
+            # some variable do not exist in win32con, for example VK_OEM_1
+            # you can check valid variables using following code:
+            # pprint([key for key in dir(win32con) if key.startswith('VK_')])
+            if not user32.RegisterHotKey(
+                    None, lucky_id, win32con.MOD_CONTROL, lucky_key):
+                return send_hotkey()
+            try:
+                msg = wintypes.MSG()
+                while user32.GetMessageA(byref(msg), None, 0, 0) != 0:
+                    if msg.message == win32con.WM_HOTKEY:
+                        self._show.emit()
+                    user32.TranslateMessage(byref(msg))
+                    user32.DispatchMessageA(byref(msg))
+                    if not kuma.running:
+                        break
+            finally:
+                user32.UnregisterHotKey(None, lucky_id)
 
-    if t.is_alive():
-        app.update(Travel(WindowsScreen(), is_hidden=False))
-        app.app.mainloop()
-        app.running = False
-        send_hotkey()
-        t.join()
-
-    # If I do not use multi-thread, then the cursor will not blink
-    # Does my implemention have potential errors?
-    # TODO: some error handlings
-
-    # try:
-    #     msg = wintypes.MSG()
-    #     while user32.GetMessageA(byref(msg), None, 0, 0) != 0:
-    #         if not app.is_hidden:
-    #             app.update_idletasks()
-    #             app.update()
-    #         if msg.message == win32con.WM_HOTKEY:
-    #             app._show()
-    #         user32.TranslateMessage(byref(msg))
-    #         user32.DispatchMessageA(byref(msg))
-    # finally:
-    #     user32.UnregisterHotKey(None, lucky_id)
+    main(kuma, Listen())
