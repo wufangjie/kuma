@@ -769,25 +769,40 @@ class DataComplete(Data):
 
 
 class DataActivate(Data):
+    def __init__(self, lst):
+        super().__init__([
+            {'left': left, 'main': main, 'desc': str(wid), 'wid': wid}
+            for left, _, main, wid in lst])
+
     def run(self, app, idx):
-        app.screen.activate_window_safely(self.data[idx][-1])
+        app.screen.activate_window_safely(self.data[idx]['wid'])
         return 'destroy' if len(self.data) == 1 else 'hold'
 
 
 class DataClose(Data):
+    def __init__(self, lst):
+        super().__init__([
+            {'left': left, 'main': main, 'desc': str(wid), 'wid': wid}
+            for left, _, main, wid in lst])
+
     def run(self, app, idx):
         screen = app.screen
-        screen.activate_window_safely(self.data[idx][-1])
+        screen.activate_window_safely(self.data[idx]['wid'])
+
         try:
-            screen.close_window(slf.data[idx][-1])
+            screen.close_window(self.data[idx]['wid'])
+            closed = True
         except:
-            pass
+            closed = False
         else:
             screen.activate_window_safely(screen.current_window)
-        if len(self.data) == 1:
-            return 'destroy'
-        self.data = self.data[:idx] + self.data[idx+1:]
-        self.hl_cur = min(len(data) - 1, app.popup.hl_cur)
+        #app._show() # useless TODO: activate kuma
+        if closed:
+            if len(self.data) == 1:
+                return 'destroy'
+            self.data = self.data[:idx] + self.data[idx+1:]
+            self.n_data -= 1
+            self.hl_cur = min(len(self.data) - 1, app.popup.hl_cur)
         return self
 
 
