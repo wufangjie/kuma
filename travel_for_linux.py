@@ -72,7 +72,7 @@ class LinuxScreen(BaseScreen):
                 app = get_property_string(win, CLASS).split('\x00')
                 if len(app) > 1 and app[1] not in {'Xfce4-panel', 'Xfdesktop'}:
                     title = get_property_string(win, TITLE)
-                    ret.append((app[1], '', title, win))
+                    ret.append((app[1], title, win.id, win))
             except Exception as e:
                 pass
         return ret

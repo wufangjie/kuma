@@ -771,38 +771,41 @@ class DataComplete(Data):
 class DataActivate(Data):
     def __init__(self, lst):
         super().__init__([
-            {'left': left, 'main': main, 'desc': str(wid), 'wid': wid}
-            for left, _, main, wid in lst])
+            {'left': left, 'main': main, 'desc': str(win), 'win': win}
+            for left, main, wid, win in lst]) # TODO: str(win) or wid
 
     def run(self, app, idx):
-        app.screen.activate_window_safely(self.data[idx]['wid'])
+        app.screen.activate_window_safely(self.data[idx]['win'])
         return 'destroy' if len(self.data) == 1 else 'hold'
 
 
 class DataClose(Data):
     def __init__(self, lst):
         super().__init__([
-            {'left': left, 'main': main, 'desc': str(wid), 'wid': wid}
-            for left, _, main, wid in lst])
+            {'left': left, 'main': main, 'desc': str(win), 'win': win}
+            for left, main, wid, win in lst])
 
     def run(self, app, idx):
         screen = app.screen
-        screen.activate_window_safely(self.data[idx]['wid'])
-
+        closed = True
         try:
-            screen.close_window(self.data[idx]['wid'])
-            closed = True
+            screen.close_window(self.data[idx]['win'])
         except:
-            closed = False
-        else:
-            screen.activate_window_safely(screen.current_window)
+            screen.activate_window_safely(self.data[idx]['win'])
+            try:
+                screen.close_window(self.data[idx]['win'])
+            except:
+                closed = False
+        app.activateWindow()
+        # activated = screen.activate_window_safely(screen.current_window)
+        # print('kuma activated: {}'.format(activated))
         #app._show() # useless TODO: activate kuma
         if closed:
-            if len(self.data) == 1:
+            if self.n_data == 1:
                 return 'destroy'
             self.data = self.data[:idx] + self.data[idx+1:]
             self.n_data -= 1
-            self.hl_cur = min(len(self.data) - 1, app.popup.hl_cur)
+            self.hl_cur = min(self.n_data - 1, app.popup.hl_cur)
         return self
 
 
@@ -1030,13 +1033,17 @@ class Travel(QWidget):
             self.popup.quit()
             self.setHidden(True)
 
+    def activate_safely(self):
+        if not self.isActiveWindow():
+            self.activateWindow()
+            self.input.clearFocus()
+            self.input.setFocus()#Qt.MouseFocusReason)
+
     def _show(self):
+        # if not self.isHidden(): # TODO: is it can fix focus problem?
+        #     self.setHidden(True)
         self.setHidden(False)
-        self.activateWindow()
-        self.input.clearFocus()
-        self.input.setFocus(Qt.MouseFocusReason)
-        self.show()
-        print('exit _show()')
+        self.activate_safely()
 
     def dummy(self):
         """Bind shortcuts your want to disable"""
@@ -1324,7 +1331,7 @@ class BaseScreen:
         poss = self.get_windows()
         if pattern:
             ret = [win for win in poss
-                   if pattern in {win[0].lower(), win[2].lower()}]
+                   if pattern in {win[0].lower(), win[1].lower()}]
             if ret:
                 self.exact_match = True
                 return ret
@@ -1333,13 +1340,13 @@ class BaseScreen:
             ret = [win for win in poss if pattern.search(win[0])]
             if ret:
                 return ret
-            return [win for win in poss if pattern.search(win[2])]
+            return [win for win in poss if pattern.search(win[1])]
         return poss
 
     @abstractmethod
     def get_windows(self):
         """Return list of (app_name, pid, title, hw) tuple
-        NOTE: important! RECORD current window
+        +NOTE: important! RECORD current window+
         """
         pass
 
@@ -1354,8 +1361,9 @@ class BaseScreen:
     def activate_window_safely(self, hw):
         try:
             self.activate_window(hw)
+            return True
         except:
-            pass
+            return False
 
     def close_window_safely(self, hw):
         try:
@@ -1371,9 +1379,7 @@ class BaseScreen:
             self.activate_window_safely(poss[0][-1])
             return 'destroy'
         else:
-            if PLATFORM == 'Windows':
-                return DataActivate(sorted(poss))
-            return DataActivate(sorted(poss, key=lambda x: (x[:-1], x[-1].id)))
+            return DataActivate(sorted(poss))
 
     def close(self, pattern):
         poss = self.get_matched_windows(pattern)

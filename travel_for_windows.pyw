@@ -73,7 +73,7 @@ class WindowsScreen(BaseScreen):
                 if text:
                     with GetApplicationName(hWnd) as app:
                         if app:
-                            ret.append((app, '', text, hWnd))
+                            ret.append((app, text, hWnd, hWnd)) # int
         return ret
 
     def activate_window(self, hWnd):
