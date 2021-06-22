@@ -6,8 +6,8 @@ from PyQt5.QtWidgets import QSizePolicy
 from PyQt5.QtWidgets import QShortcut, QAction
 from PyQt5.QtWidgets import QStyle, QProxyStyle
 
-from PyQt5.QtGui import QFont, QFontMetrics, QKeySequence#, QCursor, QTextCursor
-from PyQt5.QtCore import Qt, QEvent, QTimer#, QRect#pyqtSignal
+from PyQt5.QtGui import QFont, QFontMetrics, QKeySequence
+from PyQt5.QtCore import Qt, QEvent, QTimer
 
 import os
 import re
@@ -1410,27 +1410,16 @@ if __name__ == '__main__':
     self = Travel(BaseScreen())
     self.show()
     app.installEventFilter(self)
-    #self.thread.start()
 
 # NOTE: use QThread and pyqtSignal instead of threading.Thread
-# NOTE: linux 下 fcitx 搞了半天, 都想换框架了
-# 网上的所有答案都不行, 比如: https://stackoverflow.com/questions/50077228/cant-use-fcitx-with-self-written-qt-app?r=SearchResults
-# 又有人说是软件源里的 fcitx-frontend-qt5 不支持更高的 pyqt5 版本了, 试着自己编译也遇到了各种问题, 最终卡在了 parse IID, 但后来一想, 我的 pyqt5 也是软件源里的, 不应该不支持才对
-# 但也因为, 搜以上的问题, 在 github 上找到了 QApplication.addLibraryPath. 既然如此看看当前的 path: app.libraryPaths(), ['/usr/local/lib/python3.8/dist-packages/PyQt5/Qt5/plugins', '/usr/bin'], 坑爹啊, 已经移到 /Qt5/ 了, 怪不得 /Qt/ 下都没有 plugins 文件夹
-# 看着最终效果, 真香, windows 下, 搜狗输入法的问题还要解决
-
 
 # DONE: TODO: inserting when selected
 # DONE: TODO: change input cursor's width
 # DONE? TODO: find a better delete way?
 # DONE: TODO: disable rightclick
 # DONE: TODO: 当 mark 在 cursor 之后, 输入字符需要把 mark 往后移, 删除同理, 如果删除包含了 mark, 那么新 mark 位于删除的最前面
-# DONW? TODO: cut 与 连续删除的关系
+# DONE? TODO: cut 与 连续删除的关系
 # DONE: TODO: 中文输入法支持
 
 # TODO: shortcut for topmost?
 # TODO: 解除无用的快捷键, 防止误用
-
-        # # unbind default keybindings
-        # for e in self.input.event_info():
-        #     self.input.event_delete(e) # event_add to add
