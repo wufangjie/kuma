@@ -63,6 +63,25 @@ http://www.intowindows.com/how-to-add-apps-to-startup-in-windows-10/
 If you killed kuma by accident or kuma crashed, you can run travel_async_but_risky.py to restart kuma asynchronously
 NOTE: TODO: FIXME: not for windows yet, double click file may be your best way
 
+* fcitx support
+1. find PyQt5's library path
+#+BEGIN_SRC python
+from PyQt5.QtWidgets import QApplication
+app = QApplication.instance() # must before FM
+if app is None:
+    app = QApplication(sys.argv)
+print(app.libraryPaths())
+#+END_SRC
+2. then you will see the paths, for example:
+#+BEGIN_EXAMPLE
+['/usr/local/lib/python3.8/dist-packages/PyQt5/Qt5/plugins', '/usr/bin']
+#+END_EXAMPLE
+3. then
+#+BEGIN_SRC python
+sudo cp /usr/lib/x86_64-linux-gnu/qt5/plugins/platforminputcontexts/libfcitxplatforminputcontextplugin.so /usr/local/lib/python3.8/dist-packages/PyQt5/Qt5/plugins/platforminputcontexts/
+sudo chmod +x /usr/local/lib/python3.8/dist-packages/PyQt5/Qt5/plugins/platforminputcontexts/libfcitxplatforminputcontextplugin.so
+#+END_SRC
+
 * Custom
 ** keywords
 see `config.json`
