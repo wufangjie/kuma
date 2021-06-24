@@ -222,7 +222,8 @@
       "Command": "control /name Microsoft.ProgramsAndFeatures"
     },
     {
-      "Keyword": "服务",
+      "Keyword": "services",
+      "Pattern": "服务",
       "Platform": "Windows",
       "Command": "services.msc"
     },
