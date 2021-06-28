@@ -1254,6 +1254,7 @@ class Travel(QWidget):
             if '#' in dct:
                 dct = dct['#']
                 typ = dct['Type']
+                args = args.strip()
                 if typ == 'Web':
                     return self._get_url(dct['Command'], args)
                 elif typ == 'App':

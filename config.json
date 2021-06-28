@@ -222,7 +222,8 @@
       "Command": "control /name Microsoft.ProgramsAndFeatures"
     },
     {
-      "Keyword": "服务",
+      "Keyword": "services",
+      "Pattern": "服务",
       "Platform": "Windows",
       "Command": "services.msc"
     },
@@ -246,7 +247,7 @@
     },
     {
       "Keyword": "group",
-      "Pattern": "本地组策略a编辑器",
+      "Pattern": "本地组策略编辑器",
       "Platform": "Windows",
       "Command": "gpedit.msc"
     }
