@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QSizePolicy
 from PyQt5.QtWidgets import QShortcut, QAction
 from PyQt5.QtWidgets import QStyle, QProxyStyle
 
-from PyQt5.QtGui import QFont, QFontMetrics, QKeySequence
+from PyQt5.QtGui import QFont, QFontMetrics, QKeySequence, QIcon, QPixmap
 from PyQt5.QtCore import Qt, QEvent, QTimer
 
 import os
@@ -935,6 +935,20 @@ class Travel(QWidget):
             raise Exception('Unsupport Platform: {}'.format(PLATFORM))
 
         self.running = True
+
+        icon = QIcon()
+        if self.dw > 4000:
+            p = 512
+        elif self.dw > 2000:
+            p = 256
+        elif self.dw > 1000:
+            p = 128
+        else:
+            p = 64
+        icon.addPixmap(
+            QPixmap(os.path.join(PATH, 'icon', 'kuma({0}x{0}).png'.format(p))),
+            QIcon.Normal, QIcon.Off)
+        self.setWindowIcon(icon)
 
     @property
     def is_completing(self):
