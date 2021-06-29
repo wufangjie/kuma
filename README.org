@@ -133,7 +133,8 @@ From one of the most popular cartoon "One Piece".
 Bartholomew Kuma, whose Devil Fruit ability can send people to any place easily, just like the thing I want my script do.
 
 * TODO:
-1. sometimes kuma will lose focus (for example, an application opened), setFocus not work properly?
+0. input method insert will not trigger complete
+1. DONE? sometimes kuma will lose focus (for example, an application opened), setFocus not work properly?
 2. sogou input method on win10, not occur in the proper position (decay)
 3. default application size on different devices? (DONE?)
 4. complete without case sensetive
