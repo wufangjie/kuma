@@ -385,8 +385,8 @@ class Input(QLineEdit):
         self.setStyle(CursorStyle(THEME.get('cursor_width', 2)))
 
         # os.environ['QT_IM_MODULE'] = 'fcitx'
-        # self.setAttribute(Qt.WA_InputMethodEnabled)
-        # self.setAttribute(Qt.WA_InputMethodTransparent)
+        self.setAttribute(Qt.WA_InputMethodEnabled)
+        self.setAttribute(Qt.WA_InputMethodTransparent)
 
         self.init_ui()
 
@@ -985,7 +985,6 @@ class Travel(QWidget):
         self.popup.quit()
 
     def eventFilter(self, source, event):
-        #if event.key() ==
         if event.type() == QEvent.ShortcutOverride:
             sequence = QKeySequence(int(event.modifiers()) + event.key())
             if sequence in self.shortcuts:
@@ -993,6 +992,11 @@ class Travel(QWidget):
                 return True # just like tk's "break"?
         elif event.type() == QEvent.KeyPress:
             text = event.text()
+            if text:
+                self.input.keyboard_insert(text)
+                return True
+        elif event.type() == QEvent.InputMethod:
+            text = event.commitString()
             if text:
                 self.input.keyboard_insert(text)
                 return True
