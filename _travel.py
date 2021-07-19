@@ -996,10 +996,11 @@ class Travel(QWidget):
                 self.input.keyboard_insert(text)
                 return True
         elif event.type() == QEvent.InputMethod:
-            text = event.commitString()
-            if text:
-                self.input.keyboard_insert(text)
-                return True
+            if self.is_completing:
+                text = event.commitString()
+                if text:
+                    self.input.keyboard_insert(text)
+                    return True
         # elif event.type() == QEvent.UpdateRequest:
         #     if self.input.selected:
         #         self.input.select()
