@@ -1243,6 +1243,12 @@ class Travel(QWidget):
             return self.popup.run()
 
         text = self.input.text()
+
+        #logger.info("_run: text = {}".format(text))
+
+        if text.strip() == '':
+            return 'destroy'
+
         if self.is_path(text):
             shell = True if PLATFORM == 'Windows' else False
             if text.startswith('~'):
@@ -1425,6 +1431,7 @@ class BaseScreen:
 def main(kuma, hotkey_thread):
     kuma.add_listener(hotkey_thread)
     app.installEventFilter(kuma)
+    init_log()
     if PLATFORM == 'Windows':
         kuma.input.insert('shortcuts') # speed up the first boot
         kuma.input.clear()
