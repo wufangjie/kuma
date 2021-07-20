@@ -1421,7 +1421,8 @@ def main(kuma, hotkey_thread):
     if PLATFORM == 'Windows':
         kuma.input.insert('shortcuts') # speed up the first boot
         kuma.input.clear()
-        kuma._show()
+        if not (len(sys.argv) > 1 and sys.argv[1] == 'hide'):
+            kuma._show()
     #kuma.show()
     #kuma.quit()
     kuma.listener.start()
