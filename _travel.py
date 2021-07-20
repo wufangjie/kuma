@@ -23,6 +23,7 @@ from abc import abstractmethod
 from base import Data, Message
 from log import init_log
 import logging
+import code_search
 
 
 app = QApplication.instance() # must before FM
@@ -30,6 +31,7 @@ if app is None:
     # if it does not exist then a QApplication is created (windows)
     app = QApplication(sys.argv)
 logger = logging.getLogger(__name__)
+
 
 ########################################################################
 # global variables
@@ -1322,6 +1324,21 @@ class Travel(QWidget):
             return Message(repr(e))
         return dct['main'](args)
 
+    def set_clipboard(self, text):
+        cb = QApplication.clipboard()
+        cb.clear(mode=cb.Clipboard )
+        cb.setText(text, mode=cb.Clipboard)
+
+    def find_and_insert_code_snippet(self, args):
+        if type(args) != str or args.strip() == '':
+            return
+        code_search.try_init(self.options.get('code_base'))
+        result = code_search.search_code(args)
+        #print(result)
+        if result != None:
+            self.set_clipboard(result)
+        
+
     def _process_sp(self, key, args):
         if key == 'activate':
             return self.screen.activate(args)
@@ -1329,6 +1346,9 @@ class Travel(QWidget):
             return self.screen.close(args)
         elif key == 'quit':
             sys.exit(0)
+        elif key == 'demo':
+            self.find_and_insert_code_snippet(args)
+            return 'destroy'
         elif key == 'toggle-search-engine':
             self.search_engine ^= 1
             return Message('{} is used!'.format(self.search_engine_name),
