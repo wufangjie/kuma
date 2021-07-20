@@ -11,10 +11,11 @@ import win32api
 #from threading import Thread
 #import time
 # import subprocess
-#import sys
+import sys
 import os
 import logging
 logger = logging.getLogger(__name__)
+import json
 
 
 # NOTE: kuma can not activate a minimized task manager or register...
@@ -35,16 +36,20 @@ logger = logging.getLogger(__name__)
 
 
 class GetApplicationName:
-    def __init__(self, hWnd):
+    def __init__(self, hWnd, return_full_path=False):
         self.hWnd = hWnd
         self.handle = 0
+        self.return_full_path = return_full_path
 
     def __enter__(self):
         try:
             pid = win32process.GetWindowThreadProcessId(self.hWnd)[1]
             self.handle = win32api.OpenProcess(0x1000, 0, pid)
+            full_path = win32process.GetModuleFileNameEx(self.handle, None)
+            if self.return_full_path:
+                return full_path
             name = os.path.basename(
-                win32process.GetModuleFileNameEx(self.handle, None))
+                full_path)
             if name.endswith('.exe'):
                 return name[:-4]
             return name
@@ -57,7 +62,7 @@ class GetApplicationName:
 
 
 class WindowsScreen(BaseScreen):
-    def get_windows(self):
+    def get_windows(self, return_full_path=False):
         def valid(hWnd, param):
             if (win32gui.IsWindow(hWnd)
                 and win32gui.IsWindowEnabled(hWnd)
@@ -74,10 +79,31 @@ class WindowsScreen(BaseScreen):
             if hWnd != self.current_window:
                 text = win32gui.GetWindowText(hWnd)
                 if text:
-                    with GetApplicationName(hWnd) as app:
+                    with GetApplicationName(hWnd, return_full_path=return_full_path) as app:
                         if app:
                             ret.append((app, text, hWnd, hWnd)) # int
         return ret
+
+    def list_windows_as_json(self):
+        ret = self.get_windows(return_full_path=True)
+        L = []
+        for item in ret:
+            path = item[0]
+            path = path.replace('\\', '/')
+            if '/Windows/' in path:
+                continue
+            name = os.path.basename(path)
+            if name.endswith('.exe'):
+                name = name[:-4]
+            obj = {
+                "Keyword": name.lower(),
+                "Platform": "Windows",
+                "Command": path
+            }
+            L.append(obj)
+        out_s = json.dumps(L, ensure_ascii=False, indent=2)
+        print(out_s)
+            
 
     def activate_window(self, hWnd):
         is_previous_disable = win32gui.EnableWindow(hWnd, True)
@@ -118,6 +144,11 @@ class WindowsScreen(BaseScreen):
 
 
 if __name__ == '__main__':
+
+    if len(sys.argv) > 1 and sys.argv[1] == 'list':
+        WindowsScreen().list_windows_as_json()
+        sys.exit(0)
+
     kuma = Travel(WindowsScreen())
 
     byref = ctypes.byref
