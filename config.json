@@ -271,6 +271,10 @@
       "Keyword": "close"
     },
     {
+      "Keyword": "quit",
+      "Description": "kill the kuma process"
+    },
+    {
       "Keyword": "toggle_search_engine"
     },
     {

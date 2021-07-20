@@ -1313,6 +1313,8 @@ class Travel(QWidget):
             return self.screen.activate(args)
         elif key == 'close':
             return self.screen.close(args)
+        elif key == 'quit':
+            sys.exit(0)
         elif key == 'toggle-search-engine':
             self.search_engine ^= 1
             return Message('{} is used!'.format(self.search_engine_name),
