@@ -21,13 +21,15 @@ import subprocess
 from collections import OrderedDict#, deque
 from abc import abstractmethod
 from base import Data, Message
+from log import init_log
+import logging
 
 
 app = QApplication.instance() # must before FM
 if app is None:
     # if it does not exist then a QApplication is created (windows)
     app = QApplication(sys.argv)
-
+logger = logging.getLogger(__name__)
 
 ########################################################################
 # global variables
@@ -913,6 +915,7 @@ class Travel(QWidget):
 
         self.config_mtime = 0
         self.config_file = os.path.join(PATH, 'config.json')
+        self.options = dict()
         self.trie = KeyTrie(self)
         self.trie_last = None
         self.load_config()
@@ -963,6 +966,10 @@ class Travel(QWidget):
                 config = json.load(f)
             keyword_set = set()
             for typ, lst in config.items():
+                if typ == 'options':
+                    # well, actually it's a dictionary
+                    self.options = lst
+                    continue
                 temp = []
                 for dct in lst:
                     if PLATFORM not in dct.get('Platform', PLATFORM):
@@ -1421,7 +1428,7 @@ def main(kuma, hotkey_thread):
     if PLATFORM == 'Windows':
         kuma.input.insert('shortcuts') # speed up the first boot
         kuma.input.clear()
-        if not (len(sys.argv) > 1 and sys.argv[1] == 'hide'):
+        if kuma.options.get('hide_on_start') != False:
             kuma._show()
     #kuma.show()
     #kuma.quit()
