@@ -280,5 +280,8 @@
     {
       "Keyword": "shortcuts"
     }
-  ]
+  ],
+  "options": {
+    "hide_on_start": false
+  }
 }

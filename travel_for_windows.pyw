@@ -1,3 +1,4 @@
+import logging
 from _travel import Travel, BaseScreen, main
 from PyQt5.QtCore import pyqtSignal, QThread
 import ctypes
@@ -12,6 +13,8 @@ import win32api
 # import subprocess
 #import sys
 import os
+import logging
+logger = logging.getLogger(__name__)
 
 
 # NOTE: kuma can not activate a minimized task manager or register...
