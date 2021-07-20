@@ -142,6 +142,21 @@ class WindowsScreen(BaseScreen):
             else:
                 self.activate_window(hWnd)
 
+def parse_virtual_key(text):
+    if text.startswith('0x'):
+        return int(text, base=16)
+    elif text.isdigit():
+        return int(text)
+    elif text.startswith('VK'):
+        return eval('win32con.'+text)
+    return None
+
+
+def parse_hotkey_mode(text):
+    text = text.lower()
+    mod_map = {'alt': win32con.MOD_ALT, 'ctrl':win32con.MOD_CONTROL, 'shift': win32con.MOD_SHIFT}
+    return mod_map.get(text)
+    
 
 if __name__ == '__main__':
 
@@ -157,6 +172,12 @@ if __name__ == '__main__':
     # NOTE: use same shortcut
     lucky_id = 13425
     lucky_key = 0xBA # ;/:
+    lucky_mode = win32con.MOD_CONTROL
+
+    if 'hotkey' in kuma.options:
+        lucky_key = parse_virtual_key(kuma.options['hotkey']) or lucky_key
+    if 'hotkey_mode' in kuma.options:
+        lucky_mode = parse_hotkey_mode(kuma.options['hotkey_mode']) or lucky_mode
 
     def send_hotkey():
         # https://msdn.microsoft.com/en-us/library/dd375731(v=vs.85).aspx
@@ -177,7 +198,7 @@ if __name__ == '__main__':
             # you can check valid variables using following code:
             # pprint([key for key in dir(win32con) if key.startswith('VK_')])
             if not user32.RegisterHotKey(
-                    None, lucky_id, win32con.MOD_CONTROL, lucky_key):
+                    None, lucky_id, lucky_mode, lucky_key):
                 return send_hotkey()
             try:
                 msg = wintypes.MSG()
