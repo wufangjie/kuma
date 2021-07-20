@@ -46,8 +46,12 @@ def search_code(keyword):
         index = code.find(keyword)
         if index == -1:
             continue
-        L = index - LENGTH_BEFORE
-        R = index + LENGTH_AFTER
+        L = code.rfind('\ndef ', 0, index)
+        if L == -1:
+            L = index - LENGTH_BEFORE
+        R = code.find('\ndef ', index)
+        if R == -1:
+            R = index + LENGTH_AFTER
         if L < 0:
             L = 0
         if R > len(code):
