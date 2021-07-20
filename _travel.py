@@ -879,6 +879,7 @@ class KeyTrie:
 class Travel(QWidget):
     def __init__(self, screen):
         super().__init__()
+        Travel.instance = self
         self.screen = screen
         desktop = QApplication.desktop()
         self.dw = desktop.width()
@@ -1410,7 +1411,7 @@ class BaseScreen:
         poss = self.get_matched_windows(pattern)
         if not poss:
             return Message('No matched application!')
-        elif len(poss) == 1:
+        elif len(poss) == 1 or Travel.instance.options.get('always_first_window') == True:
             self.activate_window_safely(poss[0][-1])
             return 'destroy'
         else:
