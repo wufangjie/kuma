@@ -275,6 +275,10 @@
       "Description": "kill the kuma process"
     },
     {
+      "Keyword": "restart",
+      "Description": "restart the kuma process"
+    },
+    {
       "Keyword": "toggle_search_engine"
     },
     {
