@@ -271,6 +271,9 @@
       "Keyword": "close"
     },
     {
+      "Keyword":"demo"
+    },
+    {
       "Keyword": "quit",
       "Description": "kill the kuma process"
     },
