@@ -1305,9 +1305,19 @@ class Travel(QWidget):
 
     def _activate_or_open(self, key, args, dct):
         cmd = dct['Command']
+        #logger.info("argument = {}, cmd = {}".format(args, cmd))
         if args.rsplit(' ', 1)[-1].lower() == 'new':
             return self._subprocess_popen(
                 '{} {}'.format(cmd, args[:-4]), shell=True)
+        
+        # use case: command + path completion
+        if os.path.exists(args):
+            if ' ' in cmd:
+                cmd = '"' + cmd + '"'
+            return self._subprocess_popen(
+                '{} {}'.format(cmd, args), shell=True)
+            
+        
         for pattern in [dct.get('Pattern', ''), key]:
             if pattern:
                 ret = self.screen.activate(pattern)
