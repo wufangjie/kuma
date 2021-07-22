@@ -971,7 +971,7 @@ class Travel(QWidget):
     Item in user_config overwrites item with same Keyword in system_config.
     """
     def combine_system_and_user_config(self, system_config, user_config):
-        
+
         for k, v in user_config.items():
             if k in ['Web', 'App', 'Py', 'Sp']:
                 # Overwrite item with same Keyword
@@ -989,7 +989,7 @@ class Travel(QWidget):
             else:
                 system_config[k] = v
         #print(json.dumps(system_config, ensure_ascii=False, indent=2))
-        
+
         return system_config
 
 
@@ -1100,6 +1100,7 @@ class Travel(QWidget):
 
     def activate_safely(self):
         if not self.isActiveWindow():
+            self.raise_()
             self.activateWindow()
             self.input.clearFocus()
             self.input.setFocus()#Qt.MouseFocusReason)
@@ -1345,15 +1346,15 @@ class Travel(QWidget):
         if args.rsplit(' ', 1)[-1].lower() == 'new':
             return self._subprocess_popen(
                 '{} {}'.format(cmd, args[:-4]), shell=True)
-        
+
         # use case: command + path completion
         if os.path.exists(args):
             if ' ' in cmd:
                 cmd = '"' + cmd + '"'
             return self._subprocess_popen(
                 '{} {}'.format(cmd, args), shell=True)
-            
-        
+
+
         for pattern in [dct.get('Pattern', ''), key]:
             if pattern:
                 ret = self.screen.activate(pattern)
@@ -1383,7 +1384,7 @@ class Travel(QWidget):
         #print(result)
         if result != None:
             self.set_clipboard(result)
-        
+
 
     def _process_sp(self, key, args):
         if key == 'activate':
