@@ -1,0 +1,52 @@
+{
+  "Web": [
+    {
+      "Keyword": "google",
+      "Command": "https://www.google.com/search?q={}"
+    }
+  ],
+  "App": [
+    {
+      "Keyword": "code",
+      "Platform": "Windows",
+      "Command": "C:/Users/Mi/AppData/Local/Programs/Microsoft VS Code/Code.exe"
+    },
+    {
+      "Keyword": "wechat",
+      "Platform": "Windows",
+      "Command": "C:/Program Files (x86)/Tencent/WeChat/WeChat.exe"
+    },
+    {
+      "Keyword": "chrome",
+      "Platform": "Windows",
+      "Command": "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe"
+    },
+    {
+      "Keyword": "qq",
+      "Platform": "Windows",
+      "Command": "C:/Program Files (x86)/Tencent/QQ/Bin/QQ.exe"
+    },
+    {
+      "Keyword": "notepad",
+      "Platform": "Windows",
+      "Command": "C:/Program Files/Notepad++/notepad++.exe"
+    },
+    {
+      "Keyword": "moba",
+      "Platform": "Windows",
+      "Command": "C:/Program Files (x86)/Mobatek/MobaXterm/MobaXterm.exe"
+    },
+    {
+      "Keyword": "evernote",
+      "Platform": "Windows",
+      "Command": "C:/Program Files (x86)/Yinxiang Biji/印象笔记/Evernote.exe"
+    }
+  ],
+  "options": {
+    "hide_on_start": false,
+    "hotkey": "0xba",
+    "hotkey_mode": "ctrl",
+    "code_base":[],
+    "always_first_window": false
+  }
+}

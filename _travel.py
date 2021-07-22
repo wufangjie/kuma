@@ -917,7 +917,8 @@ class Travel(QWidget):
         self.bind_shortcuts()
 
         self.config_mtime = 0
-        self.config_file = os.path.join(PATH, 'config.json')
+        self.user_config_file = os.path.join(PATH, 'user_config.json')
+        self.system_config_file = os.path.join(PATH, 'system_config.json')
         self.options = dict()
         self.trie = KeyTrie(self)
         self.trie_last = None
@@ -960,13 +961,48 @@ class Travel(QWidget):
     def is_completing(self):
         return self.popup and isinstance(self.popup.data, DataComplete)
 
+    def find_in_list(self, L, match):
+        for i, item in enumerate(L):
+            if match(item):
+                return i
+        return -1
+
+    """
+    Item in user_config overwrites item with same Keyword in system_config.
+    """
+    def combine_system_and_user_config(self, system_config, user_config):
+        
+        for k, v in user_config.items():
+            if k in ['Web', 'App', 'Py', 'Sp']:
+                # Overwrite item with same Keyword
+                original_list = system_config[k]
+                for item in v:
+                    keyword = item['Keyword']
+                    index = self.find_in_list(original_list, lambda x: x['Keyword'] == keyword)
+                    # if found item with same name, replace; otherwise append
+                    if index >= 0:
+                        original_list[index] = item
+                    else:
+                        original_list.append(item)
+            elif k in system_config and type(v) == dict:
+                system_config[k].update(v)
+            else:
+                system_config[k] = v
+        #print(json.dumps(system_config, ensure_ascii=False, indent=2))
+        
+        return system_config
+
+
     def load_config(self):
-        mt = os.path.getmtime(self.config_file)
+        mt = os.path.getmtime(self.user_config_file)
         if self.config_mtime != mt:
             self.trie.clear()
             self.trie_last = None
-            with open(self.config_file, 'rt', encoding='utf-8') as f:
-                config = json.load(f)
+            with open(self.user_config_file, 'rt', encoding='utf-8') as f:
+                user_config = json.load(f)
+            with open(self.system_config_file, 'rt', encoding='utf-8') as f:
+                system_config = json.load(f)
+            config = self.combine_system_and_user_config(system_config, user_config)
             keyword_set = set()
             for typ, lst in config.items():
                 if typ == 'options':
