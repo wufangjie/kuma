@@ -15,7 +15,8 @@
   ],
   "input_style": [
     "border: 0.3em solid rgba(100, 100, 100, 100);",
-    "border-radius: 10px;selection-background-color: #4682b4;"
+    "border-radius: 10px;",
+    "selection-background-color: #4682b4;"
   ],
   "popup_left_style": [
     "text-align: center;",

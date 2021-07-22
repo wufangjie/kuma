@@ -97,6 +97,7 @@ if __name__ == '__main__':
     root.change_attributes(event_mask=X.KeyPressMask)
 
     # Control + ; (and maybe Caps Lock, Num Lock)
+    # TODO: add hotkey config like windows way
     key = 47
     mods = [0x0004, 0x0006, 0x0014, 0x0016]
 

@@ -201,7 +201,6 @@ class Popup(QWidget):
             self.rows.append(Row(self, i))
             layout.addWidget(self.rows[-1])
         self.setLayout(layout)
-        #self.setStyleSheet('margin-left: 0.5em; margin-right: 0.5em;')
 
     def __bool__(self):
         return self.n_data > 0
@@ -800,7 +799,7 @@ class DataClose(Data):
                 screen.close_window(self.data[idx]['win'])
             except:
                 closed = False
-        app.activateWindow()
+        app.activate_safely()
         # activated = screen.activate_window_safely(screen.current_window)
         # print('kuma activated: {}'.format(activated))
         #app._show() # useless TODO: activate kuma
@@ -1002,7 +1001,8 @@ class Travel(QWidget):
                 user_config = json.load(f)
             with open(self.system_config_file, 'rt', encoding='utf-8') as f:
                 system_config = json.load(f)
-            config = self.combine_system_and_user_config(system_config, user_config)
+            config = self.combine_system_and_user_config(
+                system_config, user_config)
             keyword_set = set()
             for typ, lst in config.items():
                 if typ == 'options':
@@ -1102,8 +1102,8 @@ class Travel(QWidget):
         if not self.isActiveWindow():
             self.raise_()
             self.activateWindow()
-            self.input.clearFocus()
-            self.input.setFocus()#Qt.MouseFocusReason)
+            # self.input.clearFocus()
+            # self.input.setFocus()#Qt.MouseFocusReason)
 
     def _show(self):
         # if not self.isHidden(): # TODO: is it can fix focus problem?
@@ -1161,7 +1161,8 @@ class Travel(QWidget):
         i0 = self.input.cursorPosition()
         if PLATFORM == 'Windows':
             if text == '/':
-                data = [{'left': 'D', 'main': '/' + d, 'real': d} for d in self.disks]
+                data = [{'left': 'D', 'main': '/' + d, 'real': d}
+                        for d in self.disks]
                 self.popup.update_data(DataComplete('path', data))
                 return
             elif text.startswith('/'):
@@ -1385,7 +1386,6 @@ class Travel(QWidget):
         if result != None:
             self.set_clipboard(result)
 
-
     def _process_sp(self, key, args):
         if key == 'activate':
             return self.screen.activate(args)
@@ -1394,6 +1394,7 @@ class Travel(QWidget):
         elif key == 'quit':
             sys.exit(0)
         elif key == 'restart':
+            # TODO: seems not work on linux
             exe = sys.executable
             if ' ' in exe:
                 exe = '"' + exe + '"'

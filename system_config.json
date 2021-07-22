@@ -1,305 +1,303 @@
-
 {
-    "Web": [
-      {
-        "Keyword": "bing",
-        "Command": "https://www.bing.com/search?q={}"
-      },
-      {
-        "Keyword": "dict(bing)",
-        "Command": "https://cn.bing.com/dict/search?q={}"
-      },
-      {
-        "Keyword": "google",
-        "Command": "https://www.google.com/search?q={}"
-      },
-      {
-        "Keyword": "scholar(google)",
-        "Command": "https://scholar.google.com/scholar?q={}"
-      },
-      {
-        "Keyword": "stackoverflow",
-        "Command": "https://stackoverflow.com/search?q={}"
-      },
-      {
-        "Keyword": "wiki",
-        "Command": "https://en.wikipedia.org/wiki/{}"
-      },
-      {
-        "Keyword": "douban",
-        "Command": "https://www.douban.com/search?q={}"
-      },
-      {
-        "Keyword": "book(douban)",
-        "Command": "https://book.douban.com/subject_search?search_text={}&cat=1001"
-      },
-      {
-        "Keyword": "movie(douban)",
-        "Command": "https://movie.douban.com/subject_search?search_text={}&cat=1002"
-      },
-      {
-        "Keyword": "github",
-        "Command": "https://github.com/search?q={}"
-      },
-      {
-        "Keyword": "jingdong",
-        "Command": "https://search.jd.com/Search?keyword={}&enc=utf-8"
-      },
-      {
-        "Keyword": "taobao",
-        "Command": "https://s.taobao.com/search?q={}"
-      },
-      {
-        "Keyword": "zhihu",
-        "Command": "https://www.zhihu.com/search?type=content&q={}"
-      },
-      {
-        "Keyword": "baidu",
-        "Command": "https://www.baidu.com/s?wd={}"
-      },
-      {
-        "Keyword": "pythonlibs",
-        "Command": "https://www.lfd.uci.edu/~gohlke/pythonlibs/"
-      },
-      {
-        "Keyword": "pypi",
-        "Command": "https://pypi.python.org/search/?q={}"
-      }
-    ],
-    "App": [
-      {
-        "Keyword": "emacs",
-        "Platform": "Linux",
-        "Command": "/usr/bin/emacs -fs"
-      },
-      {
-        "Keyword": "chromium",
-        "Platform": "Linux",
-        "Command": "/usr/bin/chromium-browser"
-      },
-      {
-        "Keyword": "chrome",
-        "Platform": "Linux",
-        "Command": "/usr/bin/google-chrome"
-      },
-      {
-        "Keyword": "explorer",
-        "Platform": "Windows",
-        "Command": "C:/Windows/explorer.exe"
-      },  
-      {
-        "Keyword": "firefox",
-        "Platform": "Linux",
-        "Command": "firefox"
-      },
-      {
-        "Keyword": "thunar",
-        "Platform": "Linux",
-        "Command": "xdg-open ~/"
-      },
-      {
-        "Keyword": "terminal",
-        "Platform": "Linux",
-        "Command": "xfce4-terminal"
-      },
-      {
-        "Keyword": "apt",
-        "Pattern": "synaptic",
-        "Platform": "Linux",
-        "Command": "synaptic-pkexec"
-      },
-      {
-        "Keyword": "synaptic",
-        "Platform": "Linux",
-        "Command": "synaptic-pkexec"
-      },
-      {
-        "Keyword": "steam",
-        "Platform": "Linux",
-        "Command": "/usr/bin/steam"
-      },
-      {
-        "Keyword": "libreoffice",
-        "Platform": "Linux",
-        "Command": "libreoffice"
-      },
-      {
-        "Keyword": "audio",
-        "Pattern": "pavucontrol",
-        "Platform": "Linux",
-        "Command": "pavucontrol"
-      },
-      {
-        "Keyword": "task-manager",
-        "Pattern": "xfce4-taskmanager",
-        "Platform": "Linux",
-        "Command": "xfce4-taskmanager"
-      },
-      {
-        "Keyword": "window-manager",
-        "Pattern": "xfwm4-settings",
-        "Platform": "Linux",
-        "Command": "xfwm4-settings"
-      },
-      {
-        "Keyword": "window-manager-tweaks",
-        "Pattern": "xfwm4-tweaks-settings",
-        "Platform": "Linux",
-        "Command": "xfwm4-tweaks-settings"
-      },
-      {
-        "Keyword": "keyboard",
-        "Platform": "Linux",
-        "Command": "xfce4-keyboard-settings"
-      },
-      {
-        "Keyword": "screenshot",
-        "Platform": "Linux",
-        "Command": "xfce4-screenshooter"
-      },
-      {
-        "Keyword": "setting",
-        "Platform": "Linux",
-        "Command": "xfce4-settings-editor"
-      },
-      {
-        "Keyword": "startup",
-        "Platform": "Linux",
-        "Command": "xfce4-session-settings"
-      },
-      {
-        "Keyword": "desktop",
-        "Platform": "Linux",
-        "Command": "xfdesktop-settings"
-      },
-      {
-        "Keyword": "cajviewer",
-        "Platform": "Linux",
-        "Command": "xdg-open /home/work/Public"
-      },
-      {
-        "Keyword": "emacs",
-        "Platform": "Windows",
-        "Command": "C:/wfj/software/emacs/bin/runemacs.exe -fs --load C:/wfj/.emacs"
-      },
-      {
-        "Keyword": "firefox",
-        "Platform": "Windows",
-        "Command": "C:/Program Files/Mozilla Firefox/firefox.exe"
-      },
-      {
-        "Keyword": "steam",
-        "Platform": "Windows",
-        "Command": "C:/Program Files (x86)/Steam/Steam.exe"
-      },
-      {
-        "Keyword": "file-manager",
-        "Platform": "Windows",
-        "Command": "start C:/"
-      },
-      {
-        "Keyword": "cmd",
-        "Pattern": "cmd.exe$",
-        "Platform": "Windows",
-        "Command": "start cmd"
-      },
-      {
-        "Keyword": "task-manager",
-        "Pattern": "taskmgr",
-        "Platform": "Windows",
-        "Command": "C:/Windows/System32/Taskmgr.exe"
-      },
-      {
-        "Keyword": "control",
-        "Pattern": "所有控制面板项",
-        "Platform": "Windows",
-        "Command": "control"
-      },
-      {
-        "Keyword": "system",
-        "Pattern": "系统",
-        "Platform": "Windows",
-        "Command": "control /name Microsoft.System"
-      },
-      {
-        "Keyword": "program-and-feature",
-        "Pattern": "程序和功能",
-        "Platform": "Windows",
-        "Command": "control /name Microsoft.ProgramsAndFeatures"
-      },
-      {
-        "Keyword": "services",
-        "Pattern": "服务",
-        "Platform": "Windows",
-        "Command": "services.msc"
-      },
-      {
-        "Keyword": "setting",
-        "Pattern": "设置",
-        "Platform": "Windows",
-        "Command": "start ms-settings:"
-      },
-      {
-        "Keyword": "computer-manager",
-        "Pattern": "计算机管理",
-        "Platform": "Windows",
-        "Command": "compmgmt.msc"
-      },
-      {
-        "Keyword": "register",
-        "Pattern": "注册表编辑器",
-        "Platform": "Windows",
-        "Command": "regedit"
-      },
-      {
-        "Keyword": "group",
-        "Pattern": "本地组策略编辑器",
-        "Platform": "Windows",
-        "Command": "gpedit.msc"
-      }
-    ],
-    "Py": [
-      {
-        "Keyword": "umount",
-        "Platform": "Linux",
-        "Description": "display unmountable devices and select to unmount"
-      },
-      {
-        "Keyword": "eval",
-        "Description": "evaluate one line python code"
-      }
-    ],
-    "Sp": [
-      {
-        "Keyword": "activate"
-      },
-      {
-        "Keyword": "close"
-      },
-      {
-        "Keyword": "quit",
-        "Description": "kill the kuma process"
-      },
-      {
-        "Keyword":"demo"
-      },
-      {
-        "Keyword": "restart",
-        "Description": "restart the kuma process"
-      },
-      {
-        "Keyword": "toggle_search_engine"
-      },
-      {
-        "Keyword": "shortcuts"
-      }
-    ],
-    "options": {
-      "hide_on_start": false,
-      "hotkey": "0xba",
-      "hotkey_mode": "ctrl",
-      "code_base":[],
-      "always_first_window": false
+  "Web": [
+    {
+      "Keyword": "bing",
+      "Command": "https://www.bing.com/search?q={}"
+    },
+    {
+      "Keyword": "dict(bing)",
+      "Command": "https://cn.bing.com/dict/search?q={}"
+    },
+    {
+      "Keyword": "google",
+      "Command": "https://www.google.com/search?q={}"
+    },
+    {
+      "Keyword": "scholar(google)",
+      "Command": "https://scholar.google.com/scholar?q={}"
+    },
+    {
+      "Keyword": "stackoverflow",
+      "Command": "https://stackoverflow.com/search?q={}"
+    },
+    {
+      "Keyword": "wiki",
+      "Command": "https://en.wikipedia.org/wiki/{}"
+    },
+    {
+      "Keyword": "douban",
+      "Command": "https://www.douban.com/search?q={}"
+    },
+    {
+      "Keyword": "book(douban)",
+      "Command": "https://book.douban.com/subject_search?search_text={}&cat=1001"
+    },
+    {
+      "Keyword": "movie(douban)",
+      "Command": "https://movie.douban.com/subject_search?search_text={}&cat=1002"
+    },
+    {
+      "Keyword": "github",
+      "Command": "https://github.com/search?q={}"
+    },
+    {
+      "Keyword": "jingdong",
+      "Command": "https://search.jd.com/Search?keyword={}&enc=utf-8"
+    },
+    {
+      "Keyword": "taobao",
+      "Command": "https://s.taobao.com/search?q={}"
+    },
+    {
+      "Keyword": "zhihu",
+      "Command": "https://www.zhihu.com/search?type=content&q={}"
+    },
+    {
+      "Keyword": "baidu",
+      "Command": "https://www.baidu.com/s?wd={}"
+    },
+    {
+      "Keyword": "pythonlibs",
+      "Command": "https://www.lfd.uci.edu/~gohlke/pythonlibs/"
+    },
+    {
+      "Keyword": "pypi",
+      "Command": "https://pypi.python.org/search/?q={}"
     }
+  ],
+  "App": [
+    {
+      "Keyword": "emacs",
+      "Platform": "Linux",
+      "Command": "/usr/bin/emacs -fs"
+    },
+    {
+      "Keyword": "chromium",
+      "Platform": "Linux",
+      "Command": "/usr/bin/chromium-browser"
+    },
+    {
+      "Keyword": "chrome",
+      "Platform": "Linux",
+      "Command": "/usr/bin/google-chrome"
+    },
+    {
+      "Keyword": "explorer",
+      "Platform": "Windows",
+      "Command": "C:/Windows/explorer.exe"
+    },
+    {
+      "Keyword": "firefox",
+      "Platform": "Linux",
+      "Command": "firefox"
+    },
+    {
+      "Keyword": "thunar",
+      "Platform": "Linux",
+      "Command": "xdg-open ~/"
+    },
+    {
+      "Keyword": "terminal",
+      "Platform": "Linux",
+      "Command": "xfce4-terminal"
+    },
+    {
+      "Keyword": "apt",
+      "Pattern": "synaptic",
+      "Platform": "Linux",
+      "Command": "synaptic-pkexec"
+    },
+    {
+      "Keyword": "synaptic",
+      "Platform": "Linux",
+      "Command": "synaptic-pkexec"
+    },
+    {
+      "Keyword": "steam",
+      "Platform": "Linux",
+      "Command": "/usr/bin/steam"
+    },
+    {
+      "Keyword": "libreoffice",
+      "Platform": "Linux",
+      "Command": "libreoffice"
+    },
+    {
+      "Keyword": "audio",
+      "Pattern": "pavucontrol",
+      "Platform": "Linux",
+      "Command": "pavucontrol"
+    },
+    {
+      "Keyword": "task-manager",
+      "Pattern": "xfce4-taskmanager",
+      "Platform": "Linux",
+      "Command": "xfce4-taskmanager"
+    },
+    {
+      "Keyword": "window-manager",
+      "Pattern": "xfwm4-settings",
+      "Platform": "Linux",
+      "Command": "xfwm4-settings"
+    },
+    {
+      "Keyword": "window-manager-tweaks",
+      "Pattern": "xfwm4-tweaks-settings",
+      "Platform": "Linux",
+      "Command": "xfwm4-tweaks-settings"
+    },
+    {
+      "Keyword": "keyboard",
+      "Platform": "Linux",
+      "Command": "xfce4-keyboard-settings"
+    },
+    {
+      "Keyword": "screenshot",
+      "Platform": "Linux",
+      "Command": "xfce4-screenshooter"
+    },
+    {
+      "Keyword": "setting",
+      "Platform": "Linux",
+      "Command": "xfce4-settings-editor"
+    },
+    {
+      "Keyword": "startup",
+      "Platform": "Linux",
+      "Command": "xfce4-session-settings"
+    },
+    {
+      "Keyword": "desktop",
+      "Platform": "Linux",
+      "Command": "xfdesktop-settings"
+    },
+    {
+      "Keyword": "cajviewer",
+      "Platform": "Linux",
+      "Command": "xdg-open /home/work/Public"
+    },
+    {
+      "Keyword": "emacs",
+      "Platform": "Windows",
+      "Command": "C:/wfj/software/emacs/bin/runemacs.exe -fs --load C:/wfj/.emacs"
+    },
+    {
+      "Keyword": "firefox",
+      "Platform": "Windows",
+      "Command": "C:/Program Files/Mozilla Firefox/firefox.exe"
+    },
+    {
+      "Keyword": "steam",
+      "Platform": "Windows",
+      "Command": "C:/Program Files (x86)/Steam/Steam.exe"
+    },
+    {
+      "Keyword": "file-manager",
+      "Platform": "Windows",
+      "Command": "start C:/"
+    },
+    {
+      "Keyword": "cmd",
+      "Pattern": "cmd.exe$",
+      "Platform": "Windows",
+      "Command": "start cmd"
+    },
+    {
+      "Keyword": "task-manager",
+      "Pattern": "taskmgr",
+      "Platform": "Windows",
+      "Command": "C:/Windows/System32/Taskmgr.exe"
+    },
+    {
+      "Keyword": "control",
+      "Pattern": "所有控制面板项",
+      "Platform": "Windows",
+      "Command": "control"
+    },
+    {
+      "Keyword": "system",
+      "Pattern": "系统",
+      "Platform": "Windows",
+      "Command": "control /name Microsoft.System"
+    },
+    {
+      "Keyword": "program-and-feature",
+      "Pattern": "程序和功能",
+      "Platform": "Windows",
+      "Command": "control /name Microsoft.ProgramsAndFeatures"
+    },
+    {
+      "Keyword": "services",
+      "Pattern": "服务",
+      "Platform": "Windows",
+      "Command": "services.msc"
+    },
+    {
+      "Keyword": "setting",
+      "Pattern": "设置",
+      "Platform": "Windows",
+      "Command": "start ms-settings:"
+    },
+    {
+      "Keyword": "computer-manager",
+      "Pattern": "计算机管理",
+      "Platform": "Windows",
+      "Command": "compmgmt.msc"
+    },
+    {
+      "Keyword": "register",
+      "Pattern": "注册表编辑器",
+      "Platform": "Windows",
+      "Command": "regedit"
+    },
+    {
+      "Keyword": "group",
+      "Pattern": "本地组策略编辑器",
+      "Platform": "Windows",
+      "Command": "gpedit.msc"
+    }
+  ],
+  "Py": [
+    {
+      "Keyword": "umount",
+      "Platform": "Linux",
+      "Description": "display unmountable devices and select to unmount"
+    },
+    {
+      "Keyword": "eval",
+      "Description": "evaluate one line python code"
+    }
+  ],
+  "Sp": [
+    {
+      "Keyword": "activate"
+    },
+    {
+      "Keyword": "close"
+    },
+    {
+      "Keyword": "quit",
+      "Description": "kill the kuma process"
+    },
+    {
+      "Keyword": "demo"
+    },
+    {
+      "Keyword": "restart",
+      "Description": "restart the kuma process"
+    },
+    {
+      "Keyword": "toggle_search_engine"
+    },
+    {
+      "Keyword": "shortcuts"
+    }
+  ],
+  "options": {
+    "hide_on_start": false,
+    "hotkey": "0xba",
+    "hotkey_mode": "ctrl",
+    "code_base": [],
+    "always_first_window": false
   }
-  
+}

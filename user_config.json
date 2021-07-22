@@ -46,7 +46,7 @@
     "hide_on_start": false,
     "hotkey": "0xba",
     "hotkey_mode": "ctrl",
-    "code_base":[],
+    "code_base": [],
     "always_first_window": false
   }
 }
