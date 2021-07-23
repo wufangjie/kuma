@@ -991,7 +991,6 @@ class Travel(QWidget):
 
     #     return system_config
 
-
     def load_config(self):
         mt = os.path.getmtime(self.user_config_file)
         if self.config_mtime != mt:
@@ -1001,40 +1000,55 @@ class Travel(QWidget):
                 user_config = json.load(f)
             with open(self.system_config_file, 'rt', encoding='utf-8') as f:
                 system_config = json.load(f)
-            # config = self.combine_system_and_user_config(
-            #     system_config, user_config)
 
             with open('user_config.json', 'rt', encoding='utf-8') as f:
                 user_config = json.load(f)
             with open('system_config.json', 'rt', encoding='utf-8') as f:
                 system_config = json.load(f)
 
-            #keyword_set = set()
-            for typ in set(user_config.keys()).union(system_config.keys()):
+            keyword_sys = set([lst['Keyword']
+                               for lst in system_config.get('Sp', [])])
+            keyword_usr = set()
+            for typ in ['Sp', 'Web', 'App', 'Py', 'options']:
                 if typ == 'options':
                     self.options = system_config[typ]
                     for k, v in user_config.items():
                         self.options[k] = v
                     continue
-                temp = []
-                for lst in [system_config.get(typ, []),
-                            user_config.get(typ, [])]:
+
+                temp = {}
+                warning_lst = []
+                for i, lst in enumerate([system_config.get(typ, []),
+                                         user_config.get(typ, [])]):
+                    if typ == 'Sp' and i == 1: # Only system_config used
+                        continue
                     for dct in lst:
                         if PLATFORM not in dct.get('Platform', PLATFORM):
                             continue
-                        # if 'Keyword' not in dct:
-                        #     return self.show_message('No Keyword!')
-                        #     #raise Exception('No Keyword!')
+                        if 'Keyword' not in dct:
+                            warning_lst.append(
+                                'No Keyword: {}'.format(str(dct)))
+                            continue
                         dct['Type'] = typ
                         key = dct['Keyword']
-                        # if key in keyword_set:
-                        #     return self.show_message(
-                        #         'Make sure the keywords are unique!')
-                        #     #raise Exception('Make sure the keywords are unique!')
-                        # keyword_set.add(key)
-                        temp.append([key, dct])
-                self.trie.inserts(sorted(temp))
+                        if i == 1:
+                            if key in keyword_sys:
+                                warning_lst.append(
+                                    'Keyword: {} is built-in!'.format(key))
+                                continue
+                            elif key in keyword_usr:
+                                warning_lst.append(
+                                    'Keyword: {} is !'.format(key))
+                                continue
+                            keyword_usr.add(key)
+                        temp[key] = dct
+                self.trie.inserts(sorted(temp.items()))
             self.config_mtime = mt
+            if self.isActiveWindow:
+                self.warning_str = ''
+                self.show_message(Message('\n'.join(warning_lst), ms=5000))
+            else:
+                self.warning_str = '\n'.join(warning_lst)
 
     def hide_popup(self):
         self.popup.quit()
@@ -1119,6 +1133,9 @@ class Travel(QWidget):
         #     self.setHidden(True)
         self.setHidden(False)
         self.activate_safely()
+        if self.warning_str:
+            self.show_message(Message(self.warning_str, ms=5000))
+            self.warning_str = ''
 
     def dummy(self):
         """Bind shortcuts your want to disable"""
