@@ -960,37 +960,36 @@ class Travel(QWidget):
     def is_completing(self):
         return self.popup and isinstance(self.popup.data, DataComplete)
 
-    def find_in_list(self, L, match):
-        for i, item in enumerate(L):
-            if match(item):
-                return i
-        return -1
+    # def find_in_list(self, L, match):
+    #     for i, item in enumerate(L):
+    #         if match(item):
+    #             return i
+    #     return -1
 
-    """
-    Item in user_config overwrites item with same Keyword in system_config.
-    """
-    def combine_system_and_user_config(self, system_config, user_config):
+    # """
+    # Item in user_config overwrites item with same Keyword in system_config.
+    # """
+    # def combine_system_and_user_config(self, system_config, user_config):
 
-        for k, v in user_config.items():
-            if k in ['Web', 'App', 'Py', 'Sp']:
-                # Overwrite item with same Keyword
-                # FIXME: same keyword for different platforms is ok!
-                original_list = system_config[k]
-                for item in v:
-                    keyword = item['Keyword']
-                    index = self.find_in_list(original_list, lambda x: x['Keyword'] == keyword)
-                    # if found item with same name, replace; otherwise append
-                    if index >= 0:
-                        original_list[index] = item
-                    else:
-                        original_list.append(item)
-            elif k in system_config and type(v) == dict:
-                system_config[k].update(v)
-            else:
-                system_config[k] = v
-        #print(json.dumps(system_config, ensure_ascii=False, indent=2))
+    #     for k, v in user_config.items():
+    #         if k in ['Web', 'App', 'Py', 'Sp']:
+    #             # Overwrite item with same Keyword
+    #             original_list = system_config[k]
+    #             for item in v:
+    #                 keyword = item['Keyword']
+    #                 index = self.find_in_list(original_list, lambda x: x['Keyword'] == keyword)
+    #                 # if found item with same name, replace; otherwise append
+    #                 if index >= 0:
+    #                     original_list[index] = item
+    #                 else:
+    #                     original_list.append(item)
+    #         elif k in system_config and type(v) == dict:
+    #             system_config[k].update(v)
+    #         else:
+    #             system_config[k] = v
+    #     #print(json.dumps(system_config, ensure_ascii=False, indent=2))
 
-        return system_config
+    #     return system_config
 
 
     def load_config(self):
@@ -1002,29 +1001,38 @@ class Travel(QWidget):
                 user_config = json.load(f)
             with open(self.system_config_file, 'rt', encoding='utf-8') as f:
                 system_config = json.load(f)
-            config = self.combine_system_and_user_config(
-                system_config, user_config)
-            keyword_set = set()
-            for typ, lst in config.items():
+            # config = self.combine_system_and_user_config(
+            #     system_config, user_config)
+
+            with open('user_config.json', 'rt', encoding='utf-8') as f:
+                user_config = json.load(f)
+            with open('system_config.json', 'rt', encoding='utf-8') as f:
+                system_config = json.load(f)
+
+            #keyword_set = set()
+            for typ in set(user_config.keys()).union(system_config.keys()):
                 if typ == 'options':
-                    # well, actually it's a dictionary
-                    self.options = lst
+                    self.options = system_config[typ]
+                    for k, v in user_config.items():
+                        self.options[k] = v
                     continue
                 temp = []
-                for dct in lst:
-                    if PLATFORM not in dct.get('Platform', PLATFORM):
-                        continue
-                    if 'Keyword' not in dct:
-                        return self.show_message('No Keyword!')
-                        #raise Exception('No Keyword!')
-                    dct['Type'] = typ
-                    key = dct['Keyword']
-                    if key in keyword_set:
-                        return self.show_message(
-                            'Make sure the keywords are unique!')
-                        #raise Exception('Make sure the keywords are unique!')
-                    keyword_set.add(key)
-                    temp.append([key, dct])
+                for lst in [system_config.get(typ, []),
+                            user_config.get(typ, [])]:
+                    for dct in lst:
+                        if PLATFORM not in dct.get('Platform', PLATFORM):
+                            continue
+                        # if 'Keyword' not in dct:
+                        #     return self.show_message('No Keyword!')
+                        #     #raise Exception('No Keyword!')
+                        dct['Type'] = typ
+                        key = dct['Keyword']
+                        # if key in keyword_set:
+                        #     return self.show_message(
+                        #         'Make sure the keywords are unique!')
+                        #     #raise Exception('Make sure the keywords are unique!')
+                        # keyword_set.add(key)
+                        temp.append([key, dct])
                 self.trie.inserts(sorted(temp))
             self.config_mtime = mt
 
