@@ -1038,7 +1038,7 @@ class Travel(QWidget):
                                 continue
                             elif key in keyword_usr:
                                 warning_lst.append(
-                                    'Keyword: {} is !'.format(key))
+                                    'Keyword: {} is confilcted!'.format(key))
                                 continue
                             keyword_usr.add(key)
                         temp[key] = dct
