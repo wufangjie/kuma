@@ -1044,11 +1044,12 @@ class Travel(QWidget):
                         temp[key] = dct
                 self.trie.inserts(sorted(temp.items()))
             self.config_mtime = mt
-            if self.isActiveWindow:
-                self.warning_str = ''
-                self.show_message(Message('\n'.join(warning_lst), ms=5000))
-            else:
-                self.warning_str = '\n'.join(warning_lst)
+            self.warning_str = ''
+            if warning_lst:
+                if self.isActiveWindow:
+                    self.show_message(Message('\n'.join(warning_lst), ms=5000))
+                else:
+                    self.warning_str = '\n'.join(warning_lst)
 
     def hide_popup(self):
         self.popup.quit()
