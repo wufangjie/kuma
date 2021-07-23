@@ -1012,7 +1012,7 @@ class Travel(QWidget):
             for typ in ['Sp', 'Web', 'App', 'Py', 'options']:
                 if typ == 'options':
                     self.options = system_config[typ]
-                    for k, v in user_config.items():
+                    for k, v in user_config[typ].items():
                         self.options[k] = v
                     continue
 
