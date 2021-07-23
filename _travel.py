@@ -974,6 +974,7 @@ class Travel(QWidget):
         for k, v in user_config.items():
             if k in ['Web', 'App', 'Py', 'Sp']:
                 # Overwrite item with same Keyword
+                # FIXME: same keyword for different platforms is ok!
                 original_list = system_config[k]
                 for item in v:
                     keyword = item['Keyword']
