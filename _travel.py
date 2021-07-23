@@ -1006,16 +1006,14 @@ class Travel(QWidget):
             with open('system_config.json', 'rt', encoding='utf-8') as f:
                 system_config = json.load(f)
 
+            self.options = system_config.get('options', {})
+            for k, v in user_config.get('options', {}).items():
+                self.options[k] = v
+
             keyword_sys = set([lst['Keyword']
                                for lst in system_config.get('Sp', [])])
             keyword_usr = set()
-            for typ in ['Sp', 'Web', 'App', 'Py', 'options']:
-                if typ == 'options':
-                    self.options = system_config[typ]
-                    for k, v in user_config[typ].items():
-                        self.options[k] = v
-                    continue
-
+            for typ in ['Sp', 'Web', 'App', 'Py']:
                 temp = {}
                 warning_lst = []
                 for i, lst in enumerate([system_config.get(typ, []),
