@@ -993,56 +993,57 @@ class Travel(QWidget):
 
     def load_config(self):
         mt = os.path.getmtime(self.user_config_file)
-        if self.config_mtime != mt:
-            self.trie.clear()
-            self.trie_last = None
-            with open(self.user_config_file, 'rt', encoding='utf-8') as f:
-                user_config = json.load(f)
-            with open(self.system_config_file, 'rt', encoding='utf-8') as f:
-                system_config = json.load(f)
+        if self.config_mtime == mt:
+            return
 
-            self.options = system_config.get('options', {})
-            for k, v in user_config.get('options', {}).items():
-                self.options[k] = v
+        self.trie.clear()
+        self.trie_last = None
+        with open(self.user_config_file, 'rt', encoding='utf-8') as f:
+            user_config = json.load(f)
+        with open(self.system_config_file, 'rt', encoding='utf-8') as f:
+            system_config = json.load(f)
+        self.options = system_config.get('options', {})
+        for k, v in user_config.get('options', {}).items():
+            self.options[k] = v
 
-            keyword_sys = set([lst['Keyword']
-                               for lst in system_config.get('Sp', [])])
-            keyword_usr = set()
-            for typ in ['Sp', 'Web', 'App', 'Py']:
-                temp = {}
-                warning_lst = []
-                for i, lst in enumerate([system_config.get(typ, []),
-                                         user_config.get(typ, [])]):
-                    if typ == 'Sp' and i == 1: # Only system_config used
+        keyword_sys = set([lst['Keyword']
+                           for lst in system_config.get('Sp', [])])
+        keyword_usr = set()
+        for typ in ['Sp', 'Web', 'App', 'Py']:
+            temp = {}
+            warning_lst = []
+            for i, lst in enumerate([system_config.get(typ, []),
+                                     user_config.get(typ, [])]):
+                if typ == 'Sp' and i == 1: # Only system_config used
+                    continue
+                for dct in lst:
+                    if PLATFORM not in dct.get('Platform', PLATFORM):
                         continue
-                    for dct in lst:
-                        if PLATFORM not in dct.get('Platform', PLATFORM):
-                            continue
-                        if 'Keyword' not in dct:
+                    if 'Keyword' not in dct:
+                        warning_lst.append('No Keyword: {}'.format(str(dct)))
+                        continue
+                    dct['Type'] = typ
+                    key = dct['Keyword']
+                    if i == 1:
+                        if key in keyword_sys:
                             warning_lst.append(
-                                'No Keyword: {}'.format(str(dct)))
+                                'Keyword: {} is built-in!'.format(key))
                             continue
-                        dct['Type'] = typ
-                        key = dct['Keyword']
-                        if i == 1:
-                            if key in keyword_sys:
-                                warning_lst.append(
-                                    'Keyword: {} is built-in!'.format(key))
-                                continue
-                            elif key in keyword_usr:
-                                warning_lst.append(
-                                    'Keyword: {} is confilcted!'.format(key))
-                                continue
-                            keyword_usr.add(key)
-                        temp[key] = dct
-                self.trie.inserts(sorted(temp.items()))
-            self.config_mtime = mt
-            self.warning_str = ''
-            if warning_lst:
-                if self.isActiveWindow:
-                    self.show_message(Message('\n'.join(warning_lst), ms=5000))
-                else:
-                    self.warning_str = '\n'.join(warning_lst)
+                        elif key in keyword_usr:
+                            warning_lst.append(
+                                'Keyword: {} is confilcted!'.format(key))
+                            continue
+                        keyword_usr.add(key)
+                    temp[key] = dct
+            self.trie.inserts(sorted(temp.items()))
+
+        self.config_mtime = mt
+        self.warning_str = ''
+        if warning_lst:
+            if self.isActiveWindow:
+                self.show_message(Message('\n'.join(warning_lst), ms=5000))
+            else:
+                self.warning_str = '\n'.join(warning_lst)
 
     def hide_popup(self):
         self.popup.quit()
