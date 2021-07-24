@@ -1001,11 +1001,6 @@ class Travel(QWidget):
             with open(self.system_config_file, 'rt', encoding='utf-8') as f:
                 system_config = json.load(f)
 
-            with open('user_config.json', 'rt', encoding='utf-8') as f:
-                user_config = json.load(f)
-            with open('system_config.json', 'rt', encoding='utf-8') as f:
-                system_config = json.load(f)
-
             self.options = system_config.get('options', {})
             for k, v in user_config.get('options', {}).items():
                 self.options[k] = v
