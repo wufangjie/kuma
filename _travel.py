@@ -1415,15 +1415,13 @@ class Travel(QWidget):
         elif key == 'quit':
             sys.exit(0)
         elif key == 'restart':
-            # TODO: seems not work on linux
+            # NOTE: It works on linux, but not in emacs comint mode
             exe = sys.executable
             if ' ' in exe:
                 exe = '"' + exe + '"'
-
             # wow, this command is amazing, no longer needs to sys.exit
             os.execv(exe, [exe, sys.argv[0]] + sys.argv)
             #sys.exit(0)
-
         elif key == 'demo':
             self.find_and_insert_code_snippet(args)
             return 'destroy'
