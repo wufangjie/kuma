@@ -1121,9 +1121,9 @@ class Travel(QWidget):
             self.setHidden(True)
 
     def activate_safely(self):
-        if not self.isActiveWindow():
-            self.raise_()
-            self.activateWindow()
+        #if not self.isActiveWindow():
+        self.raise_()
+        self.activateWindow()
             # self.input.clearFocus()
             # self.input.setFocus()#Qt.MouseFocusReason)
 
