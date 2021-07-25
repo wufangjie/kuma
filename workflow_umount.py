@@ -9,6 +9,6 @@ class DataUmount(Data):
         return 'destroy' if msg == '' else Message(msg)
 
 
-def main(params):
+def main(kuma, args):
     output = subprocess.getoutput('mount | grep -E ^/dev/sd[b-z] | sort')
     return DataUmount([(row, 'Dev') for row in output.split('\n')])

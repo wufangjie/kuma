@@ -23,7 +23,7 @@ from abc import abstractmethod
 from base import Data, Message
 from log import init_log
 import logging
-import code_search
+# import code_search
 
 
 app = QApplication.instance() # must before FM
@@ -1340,7 +1340,8 @@ class Travel(QWidget):
                 elif typ == 'App':
                     return self._activate_or_open(key, args, dct)
                 elif typ == 'Py':
-                    return self._run_workflow(key, args)
+                    py_file = dct.get('File', '') or 'workflow_{}'.format(key)
+                    return self._run_workflow(py_file, args)
                 elif typ == 'Sp':
                     return self._process_sp(key, args)
                 else:
@@ -1376,7 +1377,6 @@ class Travel(QWidget):
             return self._subprocess_popen(
                 '{} {}'.format(cmd, args), shell=True)
 
-
         for pattern in [dct.get('Pattern', ''), key]:
             if pattern:
                 ret = self.screen.activate(pattern)
@@ -1385,27 +1385,27 @@ class Travel(QWidget):
         return self._subprocess_popen(
             '{} {}'.format(cmd, args), shell=True)
 
-    def _run_workflow(self, key, args):
+    def _run_workflow(self, py_file, args):
         dct = {}
         try:
-            exec('from workflow_{} import main'.format(key), dct)
+            exec('from {} import main'.format(py_file), dct)
         except Exception as e:
             return Message(repr(e))
-        return dct['main'](args)
+        return dct['main'](self, args)
 
     def set_clipboard(self, text):
         cb = QApplication.clipboard()
-        cb.clear(mode=cb.Clipboard )
+        cb.clear(mode=cb.Clipboard)
         cb.setText(text, mode=cb.Clipboard)
 
-    def find_and_insert_code_snippet(self, args):
-        if type(args) != str or args.strip() == '':
-            return
-        code_search.try_init(self.options.get('code_base'))
-        result = code_search.search_code(args)
-        #print(result)
-        if result != None:
-            self.set_clipboard(result)
+    # def find_and_insert_code_snippet(self, args):
+    #     if type(args) != str or args.strip() == '':
+    #         return
+    #     code_search.try_init(self.options.get('code_base'))
+    #     result = code_search.search_code(args)
+    #     #print(result)
+    #     if result != None:
+    #         self.set_clipboard(result)
 
     def _process_sp(self, key, args):
         if key == 'activate':
@@ -1422,13 +1422,13 @@ class Travel(QWidget):
             # wow, this command is amazing, no longer needs to sys.exit
             os.execv(exe, [exe, sys.argv[0]] + sys.argv)
             #sys.exit(0)
-        elif key == 'demo':
-            self.find_and_insert_code_snippet(args)
-            return 'destroy'
-        elif key == 'toggle-search-engine':
-            self.search_engine ^= 1
-            return Message('{} is used!'.format(self.search_engine_name),
-                           ms=250)
+        # elif key == 'demo':
+        #     self.find_and_insert_code_snippet(args)
+        #     return 'destroy'
+        # elif key == 'toggle-search-engine':
+        #     self.search_engine ^= 1
+        #     return Message('{} is used!'.format(self.search_engine_name),
+        #                    ms=250)
         elif key == 'shortcuts':
             return Data([{'left': ks, 'main': func}
                          for ks, func in self.shortcuts_for_human.items()])

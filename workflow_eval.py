@@ -6,7 +6,7 @@ import math
 from math import *
 
 
-def main(args):
+def main(kuma, args):
     try:
         result = eval(args, globals())
     except Exception as e:

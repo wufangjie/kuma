@@ -266,31 +266,33 @@
     {
       "Keyword": "eval",
       "Description": "evaluate one line python code"
+    },
+    {
+      "Keyword": "demo",
+      "File": "workflow_code_search",
+      "Description": "search and copy code to system clipboard"
     }
   ],
   "Sp": [
     {
-      "Keyword": "activate"
+      "Keyword": "activate",
+      "Description": "activate window by keyword"
     },
     {
-      "Keyword": "close"
+      "Keyword": "close",
+      "Description": "close window by keyword"
     },
     {
       "Keyword": "quit",
       "Description": "kill the kuma process"
     },
     {
-      "Keyword": "demo"
-    },
-    {
       "Keyword": "restart",
       "Description": "restart the kuma process"
     },
     {
-      "Keyword": "toggle_search_engine"
-    },
-    {
-      "Keyword": "shortcuts"
+      "Keyword": "shortcuts",
+      "Description": "list all keyboard shortcuts"
     }
   ],
   "options": {
