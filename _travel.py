@@ -919,6 +919,7 @@ class Travel(QWidget):
         self.user_config_file = os.path.join(PATH, 'user_config.json')
         self.system_config_file = os.path.join(PATH, 'system_config.json')
         self.options = dict()
+        self.conflict_lst = []
         self.trie = KeyTrie(self)
         self.trie_last = None
         self.load_config()
@@ -960,36 +961,32 @@ class Travel(QWidget):
     def is_completing(self):
         return self.popup and isinstance(self.popup.data, DataComplete)
 
-    # def find_in_list(self, L, match):
-    #     for i, item in enumerate(L):
-    #         if match(item):
-    #             return i
-    #     return -1
+    def parse_keywords(self, typ, config, which, insert_dct,
+                       keyword_sys, keyword_usr, keyword_all):
+        w1 = 'No Keyword Found: {}!'
+        w2 = 'Keyword Conflicted with Sp Keyword: {}!'
+        w3 = 'Keyword Confilcted in user_config: {}!'
+        for dct in config.get(typ, []):
+            if PLATFORM not in dct.get('Platform', PLATFORM):
+                continue
+            if 'Keyword' not in dct:
+                self.conflict_lst.append(w1.format(str(dct)))
+                continue
+            dct['Type'] = typ
+            key = dct['Keyword']
 
-    # """
-    # Item in user_config overwrites item with same Keyword in system_config.
-    # """
-    # def combine_system_and_user_config(self, system_config, user_config):
-
-    #     for k, v in user_config.items():
-    #         if k in ['Web', 'App', 'Py', 'Sp']:
-    #             # Overwrite item with same Keyword
-    #             original_list = system_config[k]
-    #             for item in v:
-    #                 keyword = item['Keyword']
-    #                 index = self.find_in_list(original_list, lambda x: x['Keyword'] == keyword)
-    #                 # if found item with same name, replace; otherwise append
-    #                 if index >= 0:
-    #                     original_list[index] = item
-    #                 else:
-    #                     original_list.append(item)
-    #         elif k in system_config and type(v) == dict:
-    #             system_config[k].update(v)
-    #         else:
-    #             system_config[k] = v
-    #     #print(json.dumps(system_config, ensure_ascii=False, indent=2))
-
-    #     return system_config
+            if key in keyword_sys:
+                self.conflict_lst.append(w2.format(key))
+            elif typ == 'Sp':
+                keyword_sys.add(key)
+            if which != 'sys':
+                if key in keyword_usr:
+                    self.conflict_lst.append(w3.format(key))
+                else:
+                    keyword_usr.add(key)
+            if key not in keyword_all:
+                insert_dct[typ][key] = dct
+                keyword_all.add(key)
 
     def load_config(self):
         mt = os.path.getmtime(self.user_config_file)
@@ -1006,44 +1003,26 @@ class Travel(QWidget):
         for k, v in user_config.get('options', {}).items():
             self.options[k] = v
 
-        keyword_sys = set([lst['Keyword']
-                           for lst in system_config.get('Sp', [])])
+        keyword_sys = set()
         keyword_usr = set()
-        for typ in ['Sp', 'Web', 'App', 'Py']:
-            temp = {}
-            warning_lst = []
-            for i, lst in enumerate([system_config.get(typ, []),
-                                     user_config.get(typ, [])]):
-                if typ == 'Sp' and i == 1: # Only system_config used
-                    continue
-                for dct in lst:
-                    if PLATFORM not in dct.get('Platform', PLATFORM):
-                        continue
-                    if 'Keyword' not in dct:
-                        warning_lst.append('No Keyword: {}'.format(str(dct)))
-                        continue
-                    dct['Type'] = typ
-                    key = dct['Keyword']
-                    if i == 1:
-                        if key in keyword_sys:
-                            warning_lst.append(
-                                'Keyword: {} is built-in!'.format(key))
-                            continue
-                        elif key in keyword_usr:
-                            warning_lst.append(
-                                'Keyword: {} is confilcted!'.format(key))
-                            continue
-                        keyword_usr.add(key)
-                    temp[key] = dct
-            self.trie.inserts(sorted(temp.items()))
+        keyword_all = set()
+        typs = ['Sp', 'Web', 'App', 'Py']
+        insert_dct = {typ: {} for typ in typs}
+
+        self.parse_keywords('Sp', system_config, 'sys', insert_dct,
+                            keyword_sys, keyword_usr, keyword_all)
+        for typ in typs[1:]:
+            self.parse_keywords(typ, user_config, 'usr', insert_dct,
+                                keyword_sys, keyword_usr, keyword_all)
+        for typ in typs[1:]:
+            self.parse_keywords(typ, system_config, 'sys', insert_dct,
+                                keyword_sys, keyword_usr, keyword_all)
+        for typ in typs:
+            self.trie.inserts(sorted(insert_dct[typ].items()))
 
         self.config_mtime = mt
-        self.warning_str = ''
-        if warning_lst:
-            if self.isActiveWindow:
-                self.show_message(Message('\n'.join(warning_lst), ms=5000))
-            else:
-                self.warning_str = '\n'.join(warning_lst)
+        if self.isActiveWindow:
+            self.show_conflict_msg_if_need()
 
     def hide_popup(self):
         self.popup.quit()
@@ -1120,17 +1099,11 @@ class Travel(QWidget):
         #if not self.isActiveWindow():
         self.raise_()
         self.activateWindow()
-            # self.input.clearFocus()
-            # self.input.setFocus()#Qt.MouseFocusReason)
 
     def _show(self):
-        # if not self.isHidden(): # TODO: is it can fix focus problem?
-        #     self.setHidden(True)
         self.setHidden(False)
         self.activate_safely()
-        if self.warning_str:
-            self.show_message(Message(self.warning_str, ms=5000))
-            self.warning_str = ''
+        self.show_conflict_msg_if_need()
 
     def dummy(self):
         """Bind shortcuts your want to disable"""
@@ -1157,10 +1130,19 @@ class Travel(QWidget):
     def window_right(self):
         self.move_window(dx=self.dx)
 
-    def show_message(self, msg):
+    def show_message(self, msg, ms=None, action=None):
         if isinstance(msg, str):
             msg = Message(msg)
+            if ms is not None:
+                msg.ms = ms
+            if action is not None:
+                msg.action = action
         self.label.update_data(msg)
+
+    def show_conflict_msg_if_need(self):
+        if self.conflict_lst:
+            self.show_message('\n'.join(self.conflict_lst), ms=5000)
+            self.conflict_lst.clear()
 
     def complete(self):
         self.pre_action = 'tab'
