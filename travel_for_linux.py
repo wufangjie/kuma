@@ -86,7 +86,8 @@ if __name__ == '__main__':
     root = display.screen().root
     root.change_attributes(event_mask=X.KeyPressMask)
 
-    key = int(kuma.options.get('hotkey_linux', 47)) # ;
+    key = int(kuma.options.get('hotkey_linux', 47))
+    # NOTE: use linux's `xev` comand to grab keycode, 47 is ';'
     mod0 = parse_hotkey_mode(kuma.options.get('hotkey_mode', ''))
     for mod1 in [0, X.Mod2Mask]: # Num Lock
         for mod2 in [0, X.LockMask]: # Caps Lock
