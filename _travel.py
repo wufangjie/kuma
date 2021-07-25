@@ -403,14 +403,11 @@ class Input(QLineEdit):
 
         self.pre_action = '' # kill, undo, and others
 
-    def init_ui(self):#, height=PS5, font=FONT_MAIN, style='default'):
+    def init_ui(self):
         self.setMinimumWidth(self.master.app_width)
         self.setFixedHeight(PS5)
         self.setFont(FONT_MAIN)
         self.setStyleSheet(THEME.get('input_style', ''))
-
-        #self.input.setMinimumWidth(self.width // 2)
-        #self.input.setMaximumWidth(self.width * 3 // 4)
 
     def quit(self):
         self.init_state()
@@ -531,7 +528,7 @@ class Input(QLineEdit):
 
     @move
     def beginning_of_line(self):
-        #self.home(False)
+        # self.home(False)
         self.setCursorPosition(0)
 
     @move
@@ -615,7 +612,7 @@ class Input(QLineEdit):
 
     @kill
     def select_all_and_cut(self): # seems useless
-        #self.select_all()
+        # self.select_all()
         self.clipboard.setText(self.text())
         self.clear()
 
@@ -671,7 +668,7 @@ class Input(QLineEdit):
             else:
                 self.clipboard_append(text[pos : self.mark])
             if not self.hasSelectedText(): # show selection if no highlight
-                #self.setCursorPosition(self.mark)
+                # self.setCursorPosition(self.mark)
                 self.setSelection(pos, self.mark - pos)
                 self.repaint()
                 time.sleep(0.1)
@@ -802,7 +799,7 @@ class DataClose(Data):
         app.activate_safely()
         # activated = screen.activate_window_safely(screen.current_window)
         # print('kuma activated: {}'.format(activated))
-        #app._show() # useless TODO: activate kuma
+        # app._show() # useless TODO: activate kuma
         if closed:
             if self.n_data == 1:
                 return 'destroy'
@@ -924,7 +921,7 @@ class Travel(QWidget):
         self.trie_last = None
         self.load_config()
 
-        self.disks = []#set()
+        self.disks = []
         if PLATFORM == 'Linux':
             self.open_file_cmd = self.open_dir_cmd = 'xdg-open'
         elif PLATFORM == 'Windows':
@@ -1086,7 +1083,7 @@ class Travel(QWidget):
                             obj.__class__.__dict__[func], obj))
                     self.shortcuts_for_human[ks] = func
         self.sc_Return = self._bind_ks('Return', self.run)
-        self.sc_Enter = self._bind_ks('Enter', self.run) # 小键盘
+        self.sc_Enter = self._bind_ks('Enter', self.run) # Keypad enter
         self.sc_Tab = self._bind_ks('Tab', self.complete)
 
     def quit(self):
@@ -1096,7 +1093,7 @@ class Travel(QWidget):
             self.setHidden(True)
 
     def activate_safely(self):
-        #if not self.isActiveWindow():
+        # if not self.isActiveWindow(): # NOTE: do not add this
         self.raise_()
         self.activateWindow()
 
@@ -1201,7 +1198,8 @@ class Travel(QWidget):
             short = '~' + base[len(home):] if home else base
             if len(short) > 20:
                 short = os.path.join('...', os.path.split(base)[1])
-                # 太长的话, 只显示两层? 之前用 .../ 表示
+                # use .../ to present long path,
+                # since we can see them in the input widget
             data = []
             lp = len(prefix)
             hl_cur = 0
@@ -1267,6 +1265,11 @@ class Travel(QWidget):
 
     def complete_insert(self, insert):
         self.input.complete_insert(insert)
+
+    def set_clipboard(self, text):
+        cb = QApplication.clipboard()
+        cb.clear(mode=cb.Clipboard)
+        cb.setText(text, mode=cb.Clipboard)
 
     def run(self):
         action = self._run()
@@ -1347,7 +1350,7 @@ class Travel(QWidget):
 
     def _activate_or_open(self, key, args, dct):
         cmd = dct['Command']
-        #logger.info("argument = {}, cmd = {}".format(args, cmd))
+        # logger.info("argument = {}, cmd = {}".format(args, cmd))
         if args.rsplit(' ', 1)[-1].lower() == 'new':
             return self._subprocess_popen(
                 '{} {}'.format(cmd, args[:-4]), shell=True)
@@ -1375,20 +1378,6 @@ class Travel(QWidget):
             return Message(repr(e))
         return dct['main'](self, args)
 
-    def set_clipboard(self, text):
-        cb = QApplication.clipboard()
-        cb.clear(mode=cb.Clipboard)
-        cb.setText(text, mode=cb.Clipboard)
-
-    # def find_and_insert_code_snippet(self, args):
-    #     if type(args) != str or args.strip() == '':
-    #         return
-    #     code_search.try_init(self.options.get('code_base'))
-    #     result = code_search.search_code(args)
-    #     #print(result)
-    #     if result != None:
-    #         self.set_clipboard(result)
-
     def _process_sp(self, key, args):
         if key == 'activate':
             return self.screen.activate(args)
@@ -1403,14 +1392,7 @@ class Travel(QWidget):
                 exe = '"' + exe + '"'
             # wow, this command is amazing, no longer needs to sys.exit
             os.execv(exe, [exe, sys.argv[0]] + sys.argv)
-            #sys.exit(0)
-        # elif key == 'demo':
-        #     self.find_and_insert_code_snippet(args)
-        #     return 'destroy'
-        # elif key == 'toggle-search-engine':
-        #     self.search_engine ^= 1
-        #     return Message('{} is used!'.format(self.search_engine_name),
-        #                    ms=250)
+            # sys.exit(0)
         elif key == 'shortcuts':
             return Data([{'left': ks, 'main': func}
                          for ks, func in self.shortcuts_for_human.items()])
@@ -1428,7 +1410,7 @@ class Travel(QWidget):
 
         if PLATFORM == 'Linux':
             pass
-            #subprocess.call(['kill', str(p.pid)]) # kill sh -c ... process
+            # subprocess.call(['kill', str(p.pid)]) # kill sh -c ... process
         if err:
             return Message(err.strip())
         else:
@@ -1489,7 +1471,8 @@ class BaseScreen:
         poss = self.get_matched_windows(pattern)
         if not poss:
             return Message('No matched application!')
-        elif len(poss) == 1 or Travel.instance.options.get('always_first_window') == True:
+        elif len(poss) == 1 or Travel.instance.options.get(
+                'always_first_window') == True:
             self.activate_window_safely(poss[0][-1])
             return 'destroy'
         else:
@@ -1516,8 +1499,6 @@ def main(kuma, hotkey_thread):
         kuma.input.clear()
         if kuma.options.get('hide_on_start') != True:
             kuma._show()
-    #kuma.show()
-    #kuma.quit()
     kuma.listener.start()
     try:
         __file__
@@ -1534,14 +1515,5 @@ if __name__ == '__main__':
     app.installEventFilter(self)
 
 # NOTE: use QThread and pyqtSignal instead of threading.Thread
-
-# DONE: TODO: inserting when selected
-# DONE: TODO: change input cursor's width
-# DONE? TODO: find a better delete way?
-# DONE: TODO: disable rightclick
-# DONE: TODO: 当 mark 在 cursor 之后, 输入字符需要把 mark 往后移, 删除同理, 如果删除包含了 mark, 那么新 mark 位于删除的最前面
-# DONE? TODO: cut 与 连续删除的关系
-# DONE: TODO: 中文输入法支持
-
 # TODO: shortcut for topmost?
-# TODO: 解除无用的快捷键, 防止误用
+# TODO: disable pyqt5's default useless shortcuts?
