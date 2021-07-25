@@ -1,7 +1,9 @@
 #+AUTHOR: wfj
 #+EMAIL: wufangjie1223@126.com
-#+HTML_HEAD_EXTRA: <style type="text/css"> body {padding-left: 21%;} #table-of-contents {position: fixed; width: 20%; height: 100%; top: 0; left: 0; overflow-x: hidden; overflow-y: scroll;} </style>
 #+OPTIONS: ^:{} \n:t email:t
+#+HTML_HEAD_EXTRA: <style type="text/css"> body {padding-left: 26%; background: #e3edcd;} #table-of-contents {position: fixed; width: 25%; height: 100%; top: 0; left: 0; overflow-y: scroll; resize: horizontal;} i {color: #666666;} pre, pre.src:before {color: #ffffff; background: #131926;} </style>
+#+HTML_HEAD_EXTRA: <script type="text/javascript"> function adjust_html(){document.getElementsByTagName("body")[0].style.cssText="padding-left: "+(parseInt(document.getElementById("table-of-contents").style.width)+5)+"px; background: #e3edcd;"}; window.onload=function (){document.getElementById("table-of-contents").addEventListener("mouseup",adjust_html,true)}</script>
+
 * Features
 ** Usage
 1. Search the web
@@ -15,6 +17,7 @@ NOTE: use space to seperate keyword and arguments
 1. Space is not supposed to occur in keyword, indeed I use it to recognize keyword, but you can use it for completion (for commonly used command)
 2. You can use "keyword new" to force kuma open a new application (if the command do) rather activate one window
 3. When the popup have too many rows (> 2), try to press <Control-l>, see section "Emacs keybindings" below for detail
+4. Try `restart` keyword
 
 ** Completion
 1. Keyword completion and path completion
@@ -22,16 +25,16 @@ NOTE: use space to seperate keyword and arguments
 3. Short keywords are too hard to remember, I think the whole word plus completion is better
 4. I think less used applications need not to be added to keyword's completions
 
-** Emacs keybinding and custom workflow
+** Custom keybinding and custom workflow
 See below
 
 ** Shortages
 1. First time adding commonly used apps is painful
 2. Only implement exact prefix matching
 
-* Requirement
+* Requirements
 ** basic
-+ python3
++ Python3
 + PyQt5
 
 ** Linux sp
@@ -43,25 +46,29 @@ NOTE: xprop is included in x11-utils on ubuntu 18.04
 win32api
 
 NOTE: pip install may raise ImportError, please download exe from the following url:
-
 https://sourceforge.net/projects/pywin32/files/pywin32/
 
 or you can just install anaconda
 
-* Startup
+* Run kuma
+NOTE: Do not run kuma multiple times (global hotkey will only call the first kuma)
 ** Linux
+*** by hand
+#+BEGIN_SRC bash
+python3 travel_async_but_risky.py
+#+END_SRC
+
+*** startup
 I think it's just a piece of cake for linux guys
 
 For me, xfce4-session-settings -> Application Autostart -> then add command: python3 {absolute path}/travel_for_linux.py
 
 ** Windows
-Run travel_for_windows.pyw and then you can call kuma every time you press your global HOTKEY, which defined in travel_for_windows.pyw, default is <Control-;>
+*** by hand
+Double click travel_for_windows.pyw
 
+*** startup
 http://www.intowindows.com/how-to-add-apps-to-startup-in-windows-10/
-
-** Async
-If you killed kuma by accident or kuma crashed, you can run travel_async_but_risky.py to restart kuma asynchronously
-NOTE: TODO: FIXME: not for windows yet, double click file may be your best way
 
 * fcitx support
 1. find PyQt5's library path
@@ -77,19 +84,21 @@ print(app.libraryPaths())
 ['/usr/local/lib/python3.8/dist-packages/PyQt5/Qt5/plugins', '/usr/bin']
 #+END_EXAMPLE
 3. then
-#+BEGIN_SRC python
+#+BEGIN_SRC bash
 sudo cp /usr/lib/x86_64-linux-gnu/qt5/plugins/platforminputcontexts/libfcitxplatforminputcontextplugin.so /usr/local/lib/python3.8/dist-packages/PyQt5/Qt5/plugins/platforminputcontexts/
 sudo chmod +x /usr/local/lib/python3.8/dist-packages/PyQt5/Qt5/plugins/platforminputcontexts/libfcitxplatforminputcontextplugin.so
 #+END_SRC
 
 * Custom
 ** keywords
-see `config.json`
+see `system_config.json` and `user_config.json`
 
 NOTE:
-1. "Keyword" should be unique in certain platform
+1. "Keyword" in user_config should be unique in certain platform
 2. "Pattern": you can write a regular expression to match window's appname or title better, '' means use keyword instead
-3. "Platform": must in {'', Windows, Linux, Darwin} or '{}+{}' form, '' means available on all platforms
+3. "Platform": must in {'', 'Windows', 'Linux', 'Darwin'}, '' means available on all platforms
+4. user_config keyword has higher priority than system_config (Overwrite)
+5. Sp type keyword only work in system_config, which has highest priority (Built-in)
 
 ** shortcuts
 see `shortcuts.json`
@@ -106,10 +115,6 @@ see `shortcuts.json`
 3. Complete path or keywords when possible
 4. Run user-defined callback
 
-
-** theme
-see `theme.json`
-
 *** move_to_golden_row
 #+BEGIN_EXAMPLE
 if a popup has 9 rows:
@@ -121,11 +126,14 @@ if a popup has 9 rows:
 so do other popup with different number of rows
 #+END_EXAMPLE
 
+** theme
+see `theme.json`
+
 * About workflow
 1. You only need to implement a main function which will be called when you press <Enter> after type in the workflow's name.
-2. The main function's returned value will influence the displaying and the <Enter> callback on it, and then the callback's returned value, and so on.
-3. All workflow python file should be 'workflow_{}.py'.format(workflow_name)
-See base.py and my two simple workflows for more details
+2. Use the main function's returned value to interact with kuma.
+3. The default python file of a workflow is 'workflow_{}.py'.format(workflow_name), or specify "File" attribute in config to change it.
+4. See base.py and the workflows_{}.py for more details
 
 * About kuma and travel
 From one of the most popular cartoon "One Piece".
@@ -133,8 +141,5 @@ From one of the most popular cartoon "One Piece".
 Bartholomew Kuma, whose Devil Fruit ability can send people to any place easily, just like the thing I want my script do.
 
 * TODO:
-0. (DONE) input method insert will not trigger complete
-1. (DONE) sometimes kuma will lose focus (for example, an application opened), setFocus not work properly?
-2. sogou input method on win10, not occur in the proper position (decay)
-3. (DONE?) default application size on different devices?
-4. complete without case sensetive
+1. sogou input method on win10, not occur in the proper position (decay)
+2. complete without case sensetive
