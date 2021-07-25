@@ -1,6 +1,6 @@
-import logging
 from _travel import Travel, BaseScreen, main
 from PyQt5.QtCore import pyqtSignal, QThread
+
 import ctypes
 from ctypes import wintypes
 import win32gui
@@ -8,15 +8,14 @@ import win32con
 import win32com.client
 import win32process
 import win32api
-#from threading import Thread
-#import time
-# import subprocess
-import sys
-import os
-import logging
-logger = logging.getLogger(__name__)
-import json
 
+import os
+import sys
+import json
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 # NOTE: kuma can not activate a minimized task manager or register...
 # It's a UIPI (User Interface Privilege Isolation) problem
@@ -48,8 +47,7 @@ class GetApplicationName:
             full_path = win32process.GetModuleFileNameEx(self.handle, None)
             if self.return_full_path:
                 return full_path
-            name = os.path.basename(
-                full_path)
+            name = os.path.basename(full_path)
             if name.endswith('.exe'):
                 return name[:-4]
             return name
@@ -79,7 +77,8 @@ class WindowsScreen(BaseScreen):
             if hWnd != self.current_window:
                 text = win32gui.GetWindowText(hWnd)
                 if text:
-                    with GetApplicationName(hWnd, return_full_path=return_full_path) as app:
+                    with GetApplicationName(
+                            hWnd, return_full_path=return_full_path) as app:
                         if app:
                             ret.append((app, text, hWnd, hWnd)) # int
         return ret
@@ -103,7 +102,6 @@ class WindowsScreen(BaseScreen):
             L.append(obj)
         out_s = json.dumps(L, ensure_ascii=False, indent=2)
         print(out_s)
-            
 
     def activate_window(self, hWnd):
         is_previous_disable = win32gui.EnableWindow(hWnd, True)
@@ -142,21 +140,28 @@ class WindowsScreen(BaseScreen):
             else:
                 self.activate_window(hWnd)
 
-def parse_virtual_key(text):
+
+def parse_virtual_key(text, default=0xBA): # ;/:
     if text.startswith('0x'):
         return int(text, base=16)
     elif text.isdigit():
         return int(text)
     elif text.startswith('VK'):
-        return eval('win32con.'+text)
-    return None
+        return eval('win32con.' + text)
+    return default
 
 
-def parse_hotkey_mode(text):
-    text = text.lower()
-    mod_map = {'alt': win32con.MOD_ALT, 'ctrl':win32con.MOD_CONTROL, 'shift': win32con.MOD_SHIFT}
-    return mod_map.get(text)
-    
+def parse_hotkey_mode(text, default=win32con.MOD_CONTROL):
+    return {'alt': win32con.MOD_ALT,
+            'ctrl': win32con.MOD_CONTROL,
+            'shift': win32con.MOD_SHIFT}.get(text.lower(), default)
+
+
+# def get_hotkey_mode_vk(text, default=win32con.VK_CONTROL):
+#     return {'alt': win32con.VK_MENU,
+#             'ctrl': win32con.VK_CONTROL,
+#             'shift': win32con.VK_SHIFT}.get(text.lower(), default)
+
 
 if __name__ == '__main__':
 
@@ -166,26 +171,21 @@ if __name__ == '__main__':
 
     kuma = Travel(WindowsScreen())
 
+    lucky_id = 13425
+    lucky_key = parse_virtual_key(kuma.options.get('hotkey_windows', ''))
+    lucky_mode = parse_hotkey_mode(kuma.options.get('hotkey_mode', ''))
+    # lucky_mode_vk = get_hotkey_mode_vk(kuma.options.get('hotkey_mode', ''))
+
     byref = ctypes.byref
     user32 = ctypes.windll.user32
 
-    # NOTE: use same shortcut
-    lucky_id = 13425
-    lucky_key = 0xBA # ;/:
-    lucky_mode = win32con.MOD_CONTROL
 
-    if 'hotkey' in kuma.options:
-        lucky_key = parse_virtual_key(kuma.options['hotkey']) or lucky_key
-    if 'hotkey_mode' in kuma.options:
-        lucky_mode = parse_hotkey_mode(kuma.options['hotkey_mode']) or lucky_mode
-
-    def send_hotkey():
-        # https://msdn.microsoft.com/en-us/library/dd375731(v=vs.85).aspx
-        user32.keybd_event(win32con.VK_CONTROL, 0, 0, 0)
-        user32.keybd_event(lucky_key, 0, 0, 0)
-        user32.keybd_event(lucky_key, 0, win32con.KEYEVENTF_KEYUP, 0)
-        user32.keybd_event(
-            win32con.VK_CONTROL, 0, win32con.KEYEVENTF_KEYUP, 0)
+    # def send_hotkey():
+    #     # https://msdn.microsoft.com/en-us/library/dd375731(v=vs.85).aspx
+    #     user32.keybd_event(lucky_mode_vk, 0, 0, 0)
+    #     user32.keybd_event(lucky_key, 0, 0, 0)
+    #     user32.keybd_event(lucky_key, 0, win32con.KEYEVENTF_KEYUP, 0)
+    #     user32.keybd_event(lucky_mode_vk, 0, win32con.KEYEVENTF_KEYUP, 0)
 
 
     class Listen(QThread):
@@ -199,7 +199,7 @@ if __name__ == '__main__':
             # pprint([key for key in dir(win32con) if key.startswith('VK_')])
             if not user32.RegisterHotKey(
                     None, lucky_id, lucky_mode, lucky_key):
-                return send_hotkey()
+                return #send_hotkey()
             try:
                 msg = wintypes.MSG()
                 while user32.GetMessageA(byref(msg), None, 0, 0) != 0:

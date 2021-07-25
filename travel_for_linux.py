@@ -3,15 +3,14 @@
 
 from _travel import Travel, BaseScreen, main
 from PyQt5.QtCore import pyqtSignal, QThread
+
 import Xlib
 from Xlib import X #, XK
 from Xlib.display import Display
 # from Xlib.protocol.event import KeyPress, KeyRelease, ClientMessage
-#import time
-#from threading import Thread
+
 import subprocess
 import re
-#import sys
 
 
 reg_xid = re.compile(r'(0x[0-9a-f]+)')
@@ -21,21 +20,6 @@ CLASS = disp.intern_atom('WM_CLASS')
 TITLE = disp.intern_atom('_NET_WM_NAME')
 # PID = disp.intern_atom('_NET_WM_PID') # not guaranteed
 # NOTE: As far as I can see, CLASS is good enough
-
-
-def send_event(detail, state, root, display, child=X.NONE,
-               same_screen=1, root_x=0, root_y=0, event_x=0, event_y=0):
-    """This send event discourage me a lot"""
-    # time = int(time.time()) # X.CurrentTime
-    # window = root # display.get_input_focus().focus
-    # params = locals()
-    # params.pop('display')
-    # # return KeyPress(**params)
-    # window.send_event(KeyPress(**params), event_mask=1, propagate=True)
-    # display.flush()
-    # window.send_event(KeyRelease(**params), event_mask=1, propagate=True)
-    # display.flush()
-    pass
 
 
 def get_property_string(win, typ):
@@ -89,6 +73,12 @@ class LinuxScreen(BaseScreen):
         disp.sync()
 
 
+def parse_hotkey_mode(text, default=X.ControlMask):
+    return {'alt': X.Mod1Mask,
+            'ctrl': X.ControlMask,
+            'shift': X.ShiftMask}.get(text.lower(), default)
+
+
 if __name__ == '__main__':
     kuma = Travel(LinuxScreen())
 
@@ -96,19 +86,12 @@ if __name__ == '__main__':
     root = display.screen().root
     root.change_attributes(event_mask=X.KeyPressMask)
 
-    # Control + ; (and maybe Caps Lock, Num Lock)
-    # TODO: add hotkey config like windows way
-    key = 47
-    mods = [0x0004, 0x0006, 0x0014, 0x0016]
-
-    for mod in mods:
-        root.grab_key(key, mod, True, X.GrabModeAsync, X.GrabModeAsync)
-
-    # print(display.no_operation())
-    # send_event(key, mods[0], root)
-    # # XPending, XNextEvent, XWindowEvent
-    # # pending_events, next_event,
-    # raise Exception
+    key = int(kuma.options.get('hotkey_linux', 47)) # ;
+    mod0 = parse_hotkey_mode(kuma.options.get('hotkey_mode', ''))
+    for mod1 in [0, X.Mod2Mask]: # Num Lock
+        for mod2 in [0, X.LockMask]: # Caps Lock
+            mod = mod0 | mod1 | mod2
+            root.grab_key(key, mod, True, X.GrabModeAsync, X.GrabModeAsync)
 
 
     def error_handler(*args, **kwargs):

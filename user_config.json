@@ -44,7 +44,8 @@
   ],
   "options": {
     "hide_on_start": false,
-    "hotkey": "0xba",
+    "hotkey_windows": "0xba",
+    "hotkey_linux": 47,
     "hotkey_mode": "ctrl",
     "code_base": [],
     "always_first_window": false
