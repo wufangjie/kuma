@@ -39,7 +39,7 @@
     "quit": "ESC",
     "window_up": "Up",
     "window_down": "Down",
-    "window_left": "left",
-    "window_right": "right"
+    "window_left": "Left",
+    "window_right": "Right"
   }
 }
