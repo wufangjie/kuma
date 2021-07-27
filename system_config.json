@@ -283,6 +283,10 @@
       "Description": "close window by keyword"
     },
     {
+      "Keyword": "remind",
+      "Description": "Send a notification to user at specified time"
+    },
+    {
       "Keyword": "quit",
       "Description": "kill the kuma process"
     },

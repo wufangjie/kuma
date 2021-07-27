@@ -22,6 +22,7 @@ from collections import OrderedDict#, deque
 from abc import abstractmethod
 from base import Data, Message
 from log import init_log
+from reminder import ReminderRunner
 import logging
 # import code_search
 
@@ -732,12 +733,15 @@ class Label(QPushButton):#QLabel):#
         self.timer = QTimer()
         self.timer.setInterval(100)
         self.timer.timeout.connect(self.quit)
+        self.hide_all = False
 
     def quit(self):
         self.setHidden(True)
         self.adjustSize()
         self.master.adjustSize()
         self.timer.stop()
+        if self.hide_all:
+            self.master.quit()
 
     def update_data(self, msg):
         self.setText(msg.text)
@@ -746,6 +750,10 @@ class Label(QPushButton):#QLabel):#
         self.master.adjustSize()
         if msg.action == 'hide':
             self.timer.start(int(msg.ms)) # <=0 means
+            self.hide_all = False
+        if msg.action == 'hide_all':
+            self.timer.start(int(msg.ms))
+            self.hide_all = True
         elif msg.action == 'kill':
             self.master.quit()
         else:
@@ -954,6 +962,8 @@ class Travel(QWidget):
             QIcon.Normal, QIcon.Off)
         self.setWindowIcon(icon)
 
+        self.reminder = ReminderRunner(self.send_notification)
+
     @property
     def is_completing(self):
         return self.popup and isinstance(self.popup.data, DataComplete)
@@ -1135,6 +1145,10 @@ class Travel(QWidget):
             if action is not None:
                 msg.action = action
         self.label.update_data(msg)
+
+    def send_notification(self, msg):
+        self._show()
+        self.show_message(msg, ms=10000, action='hide_all')
 
     def show_conflict_msg_if_need(self):
         if self.conflict_lst:
@@ -1393,6 +1407,12 @@ class Travel(QWidget):
             # wow, this command is amazing, no longer needs to sys.exit
             os.execv(exe, [exe, sys.argv[0]] + sys.argv)
             # sys.exit(0)
+        elif key == 'remind':
+            msg = self.reminder.add_by_command(args)
+            if msg != None:
+                self.show_message(msg)
+                return None
+            return 'destroy'
         elif key == 'shortcuts':
             return Data([{'left': ks, 'main': func}
                          for ks, func in self.shortcuts_for_human.items()])
@@ -1500,6 +1520,7 @@ def main(kuma, hotkey_thread):
         if kuma.options.get('hide_on_start') != True:
             kuma._show()
     kuma.listener.start()
+    kuma.reminder.start()
     try:
         __file__
     except NameError:
