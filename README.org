@@ -143,3 +143,4 @@ Bartholomew Kuma, whose Devil Fruit ability can send people to any place easily,
 * TODO:
 1. sogou input method on win10, not occur in the proper position (decay)
 2. complete without case sensetive
+3. disable kuma's Alt+F4 for misoperation
