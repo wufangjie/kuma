@@ -1352,12 +1352,20 @@ class Travel(QWidget):
         else:
             self.show_message('Unknown keyword!')
 
+    def _get_webbrowser(self, name):
+        try:
+            path = self.trie.startswith(name)['#']['Command']
+            webbrowser.register(name, None, webbrowser.BackgroundBrowser(path))
+            return webbrowser.get(name)
+        except:
+            return webbrowser
+
     def _get_url(self, cmd, args):
         sp = args.rsplit(' ', 1)[-1].lower()
         if sp == '-c':
-            webbrowser.get('google-chrome').open_new_tab(cmd.format(args[:-3]))
+            self._get_webbrowser('chrome').open_new_tab(cmd.format(args[:-3]))
         elif sp == '-f':
-            webbrowser.get('firefox').open_new_tab(cmd.format(args[:-3]))
+            self._get_webbrowser('firefox').open_new_tab(cmd.format(args[:-3]))
         else:
             webbrowser.open_new_tab(cmd.format(args))
         return 'destroy'
