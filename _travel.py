@@ -541,6 +541,7 @@ class Input(QLineEdit):
     @unique
     def keyboard_quit(self):
         self.master.hide_popup()
+        self.master.hide_label()
         self.unselect()
 
     @kill
@@ -1075,6 +1076,9 @@ class Travel(QWidget):
     def hide_popup(self):
         self.popup.quit()
 
+    def hide_label(self):
+        self.label.quit()
+
     def eventFilter(self, source, event):
         if event.type() == QEvent.ShortcutOverride:
             sequence = QKeySequence(int(event.modifiers()) + event.key())
@@ -1141,6 +1145,7 @@ class Travel(QWidget):
         if not self.isHidden():
             self.input.quit()
             self.popup.quit()
+            self.label.quit()
             self.setHidden(True)
 
     def activate_safely(self):
