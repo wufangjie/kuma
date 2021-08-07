@@ -62,8 +62,10 @@ if font_size == 'default':
 else:
     PS = int(font_size)
 FONT_MAIN = QFont(FONT_NAME, PS << 1)
+FONT_LONG = QFont(FONT_NAME, (PS * 3) >> 1) # for long message
 FONT_DESC = QFont(FONT_NAME, PS)
 FM = QFontMetrics(FONT_MAIN)
+FM_LONG = QFontMetrics(FONT_LONG)
 PS1 = round(FM.height() / 3) # pixelSize
 PS2 = PS1 << 1
 PS3 = PS1 * 3
@@ -728,12 +730,22 @@ class Label(QPushButton):#QLabel):#
         self.setFixedWidth(self.master.app_width)
 
         # self.setContentsMargins(5, 0, 5, 0) # did not work!
-        # self.setWordWrap(True) # prefer controlling '\n' by self
+        # self.setWordWrap(True) # not valid, use self.wrap_text
 
         self.timer = QTimer()
         self.timer.setInterval(100)
         self.timer.timeout.connect(self.quit)
         self.hide_all = False
+
+        self.FM = FM
+
+    def reset_font(self, font):
+        if font == 'long':
+            self.setFont(FONT_LONG)
+            self.FM = FM_LONG
+        else:
+            self.setFont(FONT_MAIN)
+            self.FM = FM
 
     def quit(self):
         self.setHidden(True)
@@ -743,8 +755,37 @@ class Label(QPushButton):#QLabel):#
         if self.hide_all:
             self.master.quit()
 
+    def wrap_text(self, text):
+        max_w = self.master.width() - 50
+        wrapped = []
+        for row in text.split('\n'):
+            row_w = self.FM.width(row)
+            row_n = len(row)
+            if row_w < max_w:
+                wrapped.append(row)
+            else:
+                i0 = 0
+                step = int(max_w / row_w * row_n)
+                while i0 < row_n:
+                    w = self.FM.width(row[i0 : i0 + step])
+                    if w < max_w:
+                        while w < max_w:
+                            step += 1
+                            if i0 + step > row_n:
+                                break
+                            w = self.FM.width(row[i0 : i0 + step])
+                        step -= 1
+                    elif w > max_w:
+                        while w > max_w:
+                            step -= 1
+                            w = self.FM.width(row[i0 : i0 + step])
+                    wrapped.append(row[i0 : i0 + step])
+                    i0 += step
+        return '\n'.join(wrapped)
+
     def update_data(self, msg):
-        self.setText(msg.text)
+        self.reset_font(msg.font)
+        self.setText(self.wrap_text(msg.text))
         self.setHidden(False)
         self.adjustSize()
         self.master.adjustSize()
@@ -1137,13 +1178,14 @@ class Travel(QWidget):
     def window_right(self):
         self.move_window(dx=self.dx)
 
-    def show_message(self, msg, ms=None, action=None):
+    def show_message(self, msg, ms=None, action=None, font='main'):
         if isinstance(msg, str):
             msg = Message(msg)
             if ms is not None:
                 msg.ms = ms
             if action is not None:
                 msg.action = action
+            msg.font = font
         self.label.update_data(msg)
 
     def send_notification(self, msg):

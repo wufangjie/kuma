@@ -68,13 +68,15 @@ class Data:
 
 
 class Message:
-    __slots__ = ['text', 'ms', 'action']
-    def __init__(self, text, ms=2000, action='hide'):
+    __slots__ = ['text', 'ms', 'action', 'font']
+    def __init__(self, text, ms=2000, action='hide', font='main'):
         """
         text: string you want to display, support '\n' etc
         ms  : integer milliseconds before destroying the message
         action: 'hold', 'hide', 'kill'
+        font: 'main', 'long'(smaller font for long message)
         """
         self.text = text
         self.ms = ms
         self.action = action
+        self.font = font
