@@ -3,8 +3,10 @@ This script evaluates a Rust code string, and then prints out the expression on 
 It does so by creating a temporary Rust project and insert the given code into the main function in main.rs.
 """
 import os
-TEMP_DIR = os.path.expanduser('~') 
+import subprocess
+TEMP_DIR = os.path.expanduser('~')
 TEMP_PROJECT_NAME = 'temp_eval_rust'
+#CARGO_PATH = os.popen('which cargo').read().strip()
 
 CODE_TEMPLATE = """
 
@@ -66,12 +68,21 @@ def rust_eval(rust_code_str, temp_dir=TEMP_DIR):
         f.write(rust_code_str)
 
     os.chdir(TEMP_PROJECT_NAME)
-    os.system('cargo run')
+    if __name__ == '__main__':
+        os.system('cargo run')
+    else:
+        batcmd = 'cargo run'
+        try:
+            result = subprocess.check_output([batcmd], shell=True, stderr=subprocess.STDOUT, cwd=os.getcwd()).decode('utf-8')
+        except subprocess.CalledProcessError as e:
+            return "command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output.decode('utf-8'))
+        return result
 
 if __name__ == '__main__':
     import sys
     code = '"345".parse::<f64>()'
     if len(sys.argv) > 1:
         code = sys.argv[1]
-    rust_eval(code)
+    result = rust_eval(code)
+    print(result)
 
