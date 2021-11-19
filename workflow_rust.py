@@ -15,5 +15,5 @@ def main(kuma, args):
     if lines[0].strip().startswith('Running '):
         lines = lines[1:]
     result = '\n'.join(lines)
-    return Message('= {}'.format(result), 5000)
+    return Message('= {}'.format(result), 10000)
 
