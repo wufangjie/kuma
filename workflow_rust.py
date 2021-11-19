@@ -11,5 +11,9 @@ def main(kuma, args):
     except Exception as e:
         os.chdir(BASE_DIR)
         return Message('Error: {}'.format(e))
+    lines = result.splitlines()[2:]
+    if lines[0].strip().startswith('Running '):
+        lines = lines[1:]
+    result = '\n'.join(lines)
     return Message('= {}'.format(result), 5000)
 

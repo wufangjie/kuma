@@ -75,7 +75,7 @@ def rust_eval(rust_code_str, temp_dir=TEMP_DIR):
         try:
             result = subprocess.check_output([batcmd], shell=True, stderr=subprocess.STDOUT, cwd=os.getcwd()).decode('utf-8')
         except subprocess.CalledProcessError as e:
-            return "command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output.decode('utf-8'))
+            return "command '{}' return with error (code {}): \n{}".format(e.cmd, e.returncode, e.output.decode('utf-8'))
         return result
 
 if __name__ == '__main__':
