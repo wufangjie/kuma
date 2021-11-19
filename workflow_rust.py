@@ -11,6 +11,5 @@ def main(kuma, args):
     except Exception as e:
         os.chdir(BASE_DIR)
         return Message('Error: {}'.format(e))
-    print(result)
-    return Message('= '.format(result), 5000)
+    return Message('= {}'.format(result), 5000)
 
