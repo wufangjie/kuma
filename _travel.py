@@ -963,8 +963,8 @@ class Travel(QWidget):
         self.bind_shortcuts()
 
         self.config_mtime = 0
-        self.user_config_file = os.path.join(PATH, 'user_config.json')
-        self.system_config_file = os.path.join(PATH, 'system_config.json')
+        self.user_config_file = os.path.join(PATH, 'config_user.json')
+        self.system_config_file = os.path.join(PATH, 'config_system.json')
         self.options = dict()
         self.conflict_lst = []
         self.trie = KeyTrie(self)
