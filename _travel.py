@@ -17,9 +17,11 @@ import time
 import functools
 import platform
 import webbrowser
+from urllib.parse import quote
 import subprocess
 from collections import OrderedDict#, deque
 from abc import abstractmethod
+
 from base import Data, Message
 from log import init_log
 from reminder import ReminderRunner
@@ -59,6 +61,8 @@ FONT_NAME = THEME.get('font_name', 'Yuan Mo Wen')
 font_size = THEME.get('font_size', 'default')
 if font_size == 'default':
     PS = QFont(FONT_NAME).pointSize()
+    if PLATFORM == "Darwin":
+        PS = PS * 4 // 3 # for
 else:
     PS = int(font_size)
 FONT_MAIN = QFont(FONT_NAME, PS << 1)
@@ -387,7 +391,7 @@ class Input(QLineEdit):
         self.killed = 0
         self.setContextMenuPolicy(Qt.NoContextMenu) # disable rightclick
         # self.setPlaceholderText('Search')
-
+        self.setAttribute(Qt.WA_MacShowFocusRect, 0) # disable mac focused border
         self.setStyle(CursorStyle(THEME.get('cursor_width', 2)))
 
         # os.environ['QT_IM_MODULE'] = 'fcitx'
@@ -1004,6 +1008,9 @@ class Travel(QWidget):
             QIcon.Normal, QIcon.Off)
         self.setWindowIcon(icon)
 
+        self.default_web_browser = self.options["default_web_browser"].get(
+            PLATFORM, "").lower()
+
         self.reminder = ReminderRunner(self.send_notification)
 
     @property
@@ -1055,7 +1062,7 @@ class Travel(QWidget):
         keyword_sys = set()
         keyword_usr = set()
         keyword_all = set()
-        typs = ['Sp', 'Web', 'App', 'Py']
+        typs = ['Sp', 'Web', 'App', 'Mac', 'Py']
         insert_dct = {typ: {} for typ in typs}
 
         self.parse_keywords('Sp', system_config, 'sys', insert_dct,
@@ -1111,6 +1118,7 @@ class Travel(QWidget):
             # except TypeError:
             #     pass
             temp.activated.connect(func)#, type=Qt.UniqueConnection)
+            #temp.activatedAmbiguously.connect(func)#, type=Qt.UniqueConnection)
             key = temp.key()
         else:
             temp = QAction(self) # this way, function carry an event parameter
@@ -1129,13 +1137,17 @@ class Travel(QWidget):
 
     def bind_shortcuts(self):
         self.shortcuts_for_human = OrderedDict()
-        for comp, dct in load_json('shortcuts.json').items():
+        shortcuts_config = 'shortcuts.json'
+        for comp, dct in load_json(shortcuts_config).items():
             obj = self.__dict__.get(comp, self)
             for func, ks in dct.items():
                 if func in obj.__class__.__dict__:
+                    if PLATFORM == 'Darwin': # Ctrl is Command, Meta is Control
+                        ks = ks.replace("Ctrl+", "Meta+")
                     self.__dict__['sc_{}'.format(func)] = self._bind_ks(
-                        ks, functools.partial(
-                            obj.__class__.__dict__[func], obj))
+                        ks,
+                        functools.partial(obj.__class__.__dict__[func], obj)
+                    )
                     self.shortcuts_for_human[ks] = func
         self.sc_Return = self._bind_ks('Return', self.run)
         self.sc_Enter = self._bind_ks('Enter', self.run) # Keypad enter
@@ -1147,6 +1159,17 @@ class Travel(QWidget):
             self.popup.quit()
             self.label.quit()
             self.setHidden(True)
+
+    def cancel(self):
+        """Only for ESC and no-content RETURN on macos"""
+        if not self.isHidden():
+            self.input.quit()
+            self.popup.quit()
+            self.label.quit()
+            self.setHidden(True)
+            if PLATFORM == "Darwin":
+                self._subprocess_popen(
+                    "osascript -e 'tell application \"System Events\" to key code 48 using {command down}'")
 
     def activate_safely(self):
         # if not self.isActiveWindow(): # NOTE: do not add this
@@ -1355,6 +1378,7 @@ class Travel(QWidget):
         #logger.info("_run: text = {}".format(text))
 
         if text.strip() == '':
+            self.cancel()
             return 'destroy'
 
         if self.is_path(text):
@@ -1382,9 +1406,11 @@ class Travel(QWidget):
                 typ = dct['Type']
                 args = args.strip()
                 if typ == 'Web':
-                    return self._get_url(dct['Command'], args)
+                    return self._open_url(dct['Command'], args)
                 elif typ == 'App':
                     return self._activate_or_open(key, args, dct)
+                elif typ == 'Mac':
+                    return self._activate_or_open_on_mac(key, args, dct)
                 elif typ == 'Py':
                     py_file = dct.get('File', '') or 'workflow_{}'.format(key)
                     return self._run_workflow(py_file, args)
@@ -1400,6 +1426,10 @@ class Travel(QWidget):
             self.show_message('Unknown keyword!')
 
     def _get_webbrowser(self, name):
+        if name == "":
+            return webbrowser
+        elif PLATFORM == "Darwin" and name == "safari":
+            return webbrowser.get(name)
         try:
             path = self.trie.startswith(name)['#']['Command']
             webbrowser.register(name, None, webbrowser.BackgroundBrowser(path))
@@ -1407,37 +1437,44 @@ class Travel(QWidget):
         except:
             return webbrowser
 
-    def _get_url(self, cmd, args):
+    def _open_url(self, cmd, args):
         sp = args.rsplit(' ', 1)[-1].lower()
-        if sp == '-c':
-            self._get_webbrowser('chrome').open_new_tab(cmd.format(args[:-3]))
-        elif sp == '-f':
-            self._get_webbrowser('firefox').open_new_tab(cmd.format(args[:-3]))
+        wb = {"-c": "chrome", "-f": "firefox", "-s": "safari"}.get(sp)
+        if wb:
+            args = args[:-3]
         else:
-            webbrowser.open_new_tab(cmd.format(args))
+            wb = self.default_web_browser
+        self._get_webbrowser(wb).open_new_tab(cmd.format(quote(args)))
         return 'destroy'
 
     def _activate_or_open(self, key, args, dct):
         cmd = dct['Command']
         # logger.info("argument = {}, cmd = {}".format(args, cmd))
         if args.rsplit(' ', 1)[-1].lower() == 'new':
-            return self._subprocess_popen(
-                '{} {}'.format(cmd, args[:-4]), shell=True)
+            return self._subprocess_popen('{} {}'.format(cmd, args[:-4]))
 
         # use case: command + path completion
         if os.path.exists(args):
             if ' ' in cmd:
                 cmd = '"' + cmd + '"'
-            return self._subprocess_popen(
-                '{} {}'.format(cmd, args), shell=True)
+            return self._subprocess_popen('{} {}'.format(cmd, args))
 
         for pattern in [dct.get('Pattern', ''), key]:
             if pattern:
                 ret = self.screen.activate(pattern)
                 if not isinstance(ret, Message):
                     return ret
-        return self._subprocess_popen(
-            '{} {}'.format(cmd, args), shell=True)
+        return self._subprocess_popen('{} {}'.format(cmd, args))
+
+    def _activate_or_open_on_mac(self, key, args, dct):
+        cmd = dct['Command']
+        if cmd.startswith("file://"):
+            s = "osascript -e 'tell application \"{}\" to open location \"{}\"'"
+            wb = self.default_web_browser or "safari"
+            #os.system(s.format(wb, cmd.format(args)))
+            self._subprocess_popen(s.format(wb, cmd.format(args)))
+            return self._subprocess_popen("open -a {}".format(wb))
+        return self._subprocess_popen("open -a {} {}".format(cmd, args))
 
     def _run_workflow(self, py_file, args):
         dct = {}
@@ -1474,7 +1511,7 @@ class Travel(QWidget):
         else:
             return Message('Unimplemented sp-keyword: {}!'.format(key))
 
-    def _subprocess_popen(self, cmd, shell):
+    def _subprocess_popen(self, cmd, shell=True):
         p = subprocess.Popen(cmd, shell=shell, start_new_session=True,
                              stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE, universal_newlines=True)

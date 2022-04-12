@@ -65,7 +65,34 @@
       "Command": "https://pypi.python.org/search/?q={}"
     }
   ],
+  "Mac": [
+    {
+      "Keyword": "wechat",
+      "Platform": "Darwin",
+      "Command": "WeChat"
+    },
+    {
+      "Keyword": "safari",
+      "Platform": "Darwin",
+      "Command": "Safari"
+    },
+    {
+      "Keyword": "finder",
+      "Platform": "Darwin",
+      "Command": "Finder"
+    },
+    {
+      "Keyword": "terminal",
+      "Platform": "Darwin",
+      "Command": "Terminal"
+    }
+  ],
   "App": [
+    {
+      "Keyword": "emacs",
+      "Platform": "Darwin",
+      "Command": "emacs"
+    },
     {
       "Keyword": "emacs",
       "Platform": "Linux",
@@ -185,76 +212,6 @@
       "Keyword": "firefox",
       "Platform": "Windows",
       "Command": "C:/Program Files/Mozilla Firefox/firefox.exe"
-    },
-    {
-      "Keyword": "steam",
-      "Platform": "Windows",
-      "Command": "C:/Program Files (x86)/Steam/Steam.exe"
-    },
-    {
-      "Keyword": "file-manager",
-      "Platform": "Windows",
-      "Command": "start C:/"
-    },
-    {
-      "Keyword": "cmd",
-      "Pattern": "cmd.exe$",
-      "Platform": "Windows",
-      "Command": "start cmd"
-    },
-    {
-      "Keyword": "task-manager",
-      "Pattern": "taskmgr",
-      "Platform": "Windows",
-      "Command": "C:/Windows/System32/Taskmgr.exe"
-    },
-    {
-      "Keyword": "control",
-      "Pattern": "所有控制面板项",
-      "Platform": "Windows",
-      "Command": "control"
-    },
-    {
-      "Keyword": "system",
-      "Pattern": "系统",
-      "Platform": "Windows",
-      "Command": "control /name Microsoft.System"
-    },
-    {
-      "Keyword": "program-and-feature",
-      "Pattern": "程序和功能",
-      "Platform": "Windows",
-      "Command": "control /name Microsoft.ProgramsAndFeatures"
-    },
-    {
-      "Keyword": "services",
-      "Pattern": "服务",
-      "Platform": "Windows",
-      "Command": "services.msc"
-    },
-    {
-      "Keyword": "setting",
-      "Pattern": "设置",
-      "Platform": "Windows",
-      "Command": "start ms-settings:"
-    },
-    {
-      "Keyword": "computer-manager",
-      "Pattern": "计算机管理",
-      "Platform": "Windows",
-      "Command": "compmgmt.msc"
-    },
-    {
-      "Keyword": "register",
-      "Pattern": "注册表编辑器",
-      "Platform": "Windows",
-      "Command": "regedit"
-    },
-    {
-      "Keyword": "group",
-      "Pattern": "本地组策略编辑器",
-      "Platform": "Windows",
-      "Command": "gpedit.msc"
     }
   ],
   "Py": [
@@ -268,7 +225,7 @@
       "Description": "evaluate one line python code"
     },
     {
-      "Keyword": "rust",
+      "Keyword": "rust-eval",
       "Description": "evaluate one line/several lines of Rust code"
     },
     {

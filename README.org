@@ -50,6 +50,11 @@ https://sourceforge.net/projects/pywin32/files/pywin32/
 
 or you can just install anaconda
 
+** MacOS sp
++ pyobjc-core
++ pyobjc-framework-Cocoa
++ pyobjc-framework-Quartz
+
 * Run kuma
 NOTE: Do not run kuma multiple times (global hotkey will only call the first kuma)
 ** Linux
@@ -69,6 +74,8 @@ Double click travel_for_windows.pyw
 
 *** startup
 http://www.intowindows.com/how-to-add-apps-to-startup-in-windows-10/
+
+** TODO MacOS
 
 * fcitx support
 1. find PyQt5's library path

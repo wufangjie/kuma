@@ -5,6 +5,13 @@
       "Command": "https://www.google.com/search?q={}"
     }
   ],
+  "Mac": [
+    {
+      "Keyword": "rust-std",
+      "Platform": "Darwin",
+      "Command": "file:///Users/wufangjie/.rustup/toolchains/nightly-aarch64-apple-darwin/share/doc/rust/html/std/index.html?search={}"
+    }
+  ],
   "App": [
     {
       "Keyword": "code",
@@ -20,34 +27,16 @@
       "Keyword": "chrome",
       "Platform": "Windows",
       "Command": "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe"
-    },
-    {
-      "Keyword": "qq",
-      "Platform": "Windows",
-      "Command": "C:/Program Files (x86)/Tencent/QQ/Bin/QQ.exe"
-    },
-    {
-      "Keyword": "notepad",
-      "Platform": "Windows",
-      "Command": "C:/Program Files/Notepad++/notepad++.exe"
-    },
-    {
-      "Keyword": "moba",
-      "Platform": "Windows",
-      "Command": "C:/Program Files (x86)/Mobatek/MobaXterm/MobaXterm.exe"
-    },
-    {
-      "Keyword": "evernote",
-      "Platform": "Windows",
-      "Command": "C:/Program Files (x86)/Yinxiang Biji/印象笔记/Evernote.exe"
     }
   ],
   "options": {
     "hide_on_start": false,
     "hotkey_windows": "0xba",
     "hotkey_linux": 47,
+    "hotkey_darwin": 41,
     "hotkey_mode": "ctrl",
     "code_base": [],
+    "default_web_browser": {},
     "always_first_window": false
   }
 }

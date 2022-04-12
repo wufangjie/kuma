@@ -36,7 +36,7 @@
     "undo": "Ctrl+/"
   },
   "whole": {
-    "quit": "ESC",
+    "cancel": "ESC",
     "window_up": "Up",
     "window_down": "Down",
     "window_left": "Left",
