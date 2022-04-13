@@ -4,10 +4,11 @@ class Data:
         Data for popup's displaying
 
         The popup's row is designed as follow:
-        ------ --------------------------------------------
-        | ty | | text                                     |
-        | pe | | description (won't display if not given) |
-        ------ --------------------------------------------
+        -------- --------------------------------------------
+        |      | | text                                     |
+        | type | |-------------------------------------------
+        |      | | description (won't display if not given) |
+        -------- --------------------------------------------
 
         data: list of row_data, row_data = {'left': '', 'main': '', 'desc': ''}
         index: in range(0, len(data))
@@ -17,8 +18,11 @@ class Data:
         your highlighted row can not be the first one now.
         """
         self.data = data
-        self.n_data = len(data)
         self.hl_cur = min(max(0, hl_cur), self.n_data - 1)
+
+    @property
+    def n_data(self):
+        return len(self.data)
 
     def run(self, app, idx):
         """
