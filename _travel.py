@@ -15,73 +15,84 @@ import sys
 import json
 import time
 import functools
-import platform
 import webbrowser
 from urllib.parse import quote
-import subprocess
 from collections import OrderedDict#, deque
 from abc import abstractmethod
 
 from base import Data, Message
+from utils import PATH, PLATFORM
+from utils import load_json, run_script, run_apple_script
+
 from log import init_log
 from reminder import ReminderRunner
 import logging
 # import code_search
 
 
-app = QApplication.instance() # must before FM
-if app is None:
-    # if it does not exist then a QApplication is created (windows)
-    app = QApplication(sys.argv)
-logger = logging.getLogger(__name__)
-
-
 ########################################################################
 # global variables
 ########################################################################
 DEBUG = True#False#
-PLATFORM = platform.system() # {'Linux', 'Windows', 'Darwin'}
 
-try:
-    PATH = os.path.split(os.path.realpath(__file__))[0]
-except NameError:
-    PATH = os.getcwd() or os.getenv('PWD')
-
-def load_json(filename):
-    with open(os.path.join(PATH, filename), 'rt', encoding='utf-8') as f:
-        return json.load(f)
-
-
-THEME = load_json('theme.json')
-for key, val in THEME.items():
-    if isinstance(val, (list, tuple)):
-        THEME[key] = ' '.join(val)
-
-FONT_NAME = THEME.get('font_name', 'Yuan Mo Wen')
-font_size = THEME.get('font_size', 'default')
-if font_size == 'default':
-    PS = QFont(FONT_NAME).pointSize()
-    if PLATFORM == "Darwin":
-        PS = PS * 4 // 3 # for
-else:
-    PS = int(font_size)
-FONT_MAIN = QFont(FONT_NAME, PS << 1)
-FONT_LONG = QFont(FONT_NAME, (PS * 3) >> 1) # for long message
-FONT_DESC = QFont(FONT_NAME, PS)
-FM = QFontMetrics(FONT_MAIN)
-FM_LONG = QFontMetrics(FONT_LONG)
-PS1 = round(FM.height() / 3) # pixelSize
-PS2 = PS1 << 1
-PS3 = PS1 * 3
-PS5 = PS1 * 5 # 2 + 3 = 5
-
-
-QApplication.setStyle(THEME.get('app_style', 'Fusion')) # NOTE: for windows
-if False:
-    from PyQt5.QtWidgets import QStyleFactory
-    print(QStyleFactory.keys()) # see more application styles
-
+logger = logging.getLogger(__name__)
 re_path = re.compile(r'^([A-Za-z]:|~|/)')
+
+
+class Theme:
+    def __init__(self, filename='theme.json'):
+        self.data = load_json('theme.json')
+        for key, val in self.data.items():
+            if isinstance(val, (list, tuple)):
+                self.data[key] = ' '.join(val)
+        QApplication.setStyle(self.get('app_style', 'Fusion')) # NOTE: for windows
+
+        if False:
+            from PyQt5.QtWidgets import QStyleFactory
+            print(QStyleFactory.keys()) # see more application styles
+
+    def __getitem__(self, key):
+        return self.data.get(key, '')
+
+    def get(self, key, default=None):
+        return self.data.get(key, default)
+
+
+class Font:
+    def __init__(self, theme):
+        font_name = theme['font_name']
+        font_size = theme['font_size']
+        if font_size == 'default':
+            PS = QFont(font_name).pointSize()
+            if PLATFORM == "Darwin":
+                PS = PS * 4 // 3 # for
+        else:
+            PS = int(font_size)
+        self.FONT_MAIN = QFont(font_name, PS << 1)
+        self.FONT_LONG = QFont(font_name, (PS * 3) >> 1) # for long message
+        self.FONT_DESC = QFont(font_name, PS)
+
+        self.FM = QFontMetrics(self.FONT_MAIN) # None #
+        self.FM_LONG = QFontMetrics(self.FONT_LONG) # None #
+        self.PS1 = round(self.FM.height() / 3) # pixelSize
+
+    @property
+    def PS2(self):
+        return self.PS1 << 1
+
+    @property
+    def PS3(self):
+        return self.PS1 * 3
+
+    @property
+    def PS5(self):
+        return self.PS1 * 5 # 2 + 3 = 5
+
+    # def _(self, x):
+    #     # self.FM = QFontMetrics(self.FONT_MAIN)
+    #     # self.FM_LONG = QFontMetrics(self.FONT_LONG)
+    #     # self.PS1 = round(FM.height() / 3) # pixelSize
+    #     self.PS1 = x
 
 
 class CursorStyle(QProxyStyle):
@@ -105,19 +116,22 @@ class Row(QWidget):
     def __init__(self, master, index):
         super().__init__(master)
         self.master = master
+        self.theme = self.master.theme
+        self.font = self.master.font
+
         self.index = index
 
-        self.left = self.make_component(FONT_MAIN, PS5)
-        self.main = self.make_component(FONT_MAIN, PS3)
-        self.desc = self.make_component(FONT_DESC, PS2)
+        self.left = self.make_component(self.font.FONT_MAIN, self.font.PS5)
+        self.main = self.make_component(self.font.FONT_MAIN, self.font.PS3)
+        self.desc = self.make_component(self.font.FONT_DESC, self.font.PS2)
 
         self.left.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
         self.main.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.desc.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
-        self.left.setStyleSheet(THEME.get('popup_left_style', ''))
-        self.main.setStyleSheet(THEME.get('popup_main_style', ''))
-        self.desc.setStyleSheet(THEME.get('popup_desc_style', ''))
+        self.left.setStyleSheet(self.theme['popup_left_style'])
+        self.main.setStyleSheet(self.theme['popup_main_style'])
+        self.desc.setStyleSheet(self.theme['popup_desc_style'])
 
         layout = QGridLayout()
         layout.addWidget(self.left, 0, 0, 2, 1) # rowspan, columnspan
@@ -139,14 +153,14 @@ class Row(QWidget):
 
     def hide_desc(self):
         self.desc.setHidden(True)
-        self.main.setFixedHeight(PS5)
+        self.main.setFixedHeight(self.font.PS5)
 
     def show_desc(self):
         self.desc.setHidden(False)
-        self.main.setFixedHeight(PS3)
+        self.main.setFixedHeight(self.font.PS3)
 
     def highlight(self):
-        self.setStyleSheet(THEME.get('highlight_style', ''))
+        self.setStyleSheet(self.theme['highlight_style'])
 
     def unhighlight(self):
         self.setStyleSheet('')
@@ -191,6 +205,9 @@ class Popup(QWidget):
         super().__init__(master)
         self.setHidden(True)
         self.master = master
+        self.theme = self.master.theme
+        self.font = self.master.font
+
         self.maxdisp = 9
 
         self.data = []
@@ -225,7 +242,7 @@ class Popup(QWidget):
 
     def update_display(self):
         i0 = self.i_page * self.maxdisp
-        width = max([FM.width(d.get('left', ''))
+        width = max([self.font.FM.width(d.get('left', ''))
                      for d in self.data[i0 : i0 + self.maxdisp]])
         if width:
             width += 22 # NOTE: padding-left + padding-right + 2
@@ -386,13 +403,16 @@ class Input(QLineEdit):
     def __init__(self, master):
         super().__init__(master)
         self.master = master
+        self.theme = self.master.theme
+        self.font = self.master.font
+
         self.clipboard = QApplication.clipboard()
         self.init_state()
         self.killed = 0
         self.setContextMenuPolicy(Qt.NoContextMenu) # disable rightclick
         # self.setPlaceholderText('Search')
         self.setAttribute(Qt.WA_MacShowFocusRect, 0) # disable mac focused border
-        self.setStyle(CursorStyle(THEME.get('cursor_width', 2)))
+        self.setStyle(CursorStyle(self.theme['cursor_width']))
 
         # os.environ['QT_IM_MODULE'] = 'fcitx'
         self.setAttribute(Qt.WA_InputMethodEnabled)
@@ -412,9 +432,9 @@ class Input(QLineEdit):
 
     def init_ui(self):
         self.setMinimumWidth(self.master.app_width)
-        self.setFixedHeight(PS5)
-        self.setFont(FONT_MAIN)
-        self.setStyleSheet(THEME.get('input_style', ''))
+        self.setFixedHeight(self.font.PS5)
+        self.setFont(self.font.FONT_MAIN)
+        self.setStyleSheet(self.theme['input_style'])
 
     def quit(self):
         self.init_state()
@@ -725,13 +745,18 @@ class Input(QLineEdit):
 class Label(QPushButton):#QLabel):#
     def __init__(self, master):
         super().__init__(master)
+
+        self.master = master
+        self.theme = self.master.theme
+        self.font = self.master.font
+        self.FM = self.font.FM # current Font Manager
+
         self.setHidden(True)
         self.setEnabled(False)
-        self.setFont(FONT_MAIN)
-        self.master = master
+        self.setFont(self.font.FONT_MAIN)
 
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        self.setStyleSheet(THEME.get('message_style', ''))
+        self.setStyleSheet(self.theme['message_style'])
         self.setFixedWidth(self.master.app_width)
 
         # self.setContentsMargins(5, 0, 5, 0) # did not work!
@@ -742,15 +767,13 @@ class Label(QPushButton):#QLabel):#
         self.timer.timeout.connect(self.quit)
         self.hide_all = False
 
-        self.FM = FM
-
     def reset_font(self, font):
         if font == 'long':
-            self.setFont(FONT_LONG)
-            self.FM = FM_LONG
+            self.setFont(self.font.FONT_LONG)
+            self.FM = self.font.FM_LONG
         else:
-            self.setFont(FONT_MAIN)
-            self.FM = FM
+            self.setFont(self.font.FONT_MAIN)
+            self.FM = self.font.FM
 
     def quit(self):
         self.setHidden(True)
@@ -944,12 +967,15 @@ class Travel(QWidget):
         self.app_width = self.dw >> 1
 
         self.setWindowTitle('kuma')
-        self.setStyleSheet(THEME.get('global_style', ''))
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setWindowFlags(Qt.FramelessWindowHint)
         # self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         # self.setMinimumWidth(self.dw >> 1)
         # self.setMaximumWidth(self.dw * 3 // 4)
+
+        self.theme = Theme()
+        self.font = Font(self.theme)
+        self.setStyleSheet(self.theme['global_style'])
 
         self.input = Input(self)
         self.popup = Popup(self)
@@ -963,12 +989,17 @@ class Travel(QWidget):
         layout.setSpacing(0) # between input and popup
         self.setLayout(layout)
 
+        self.config_mtime = 0 # just for config_user.json
+        self.config_system = 'config_system.json'
+        self.config_user = 'config_user.json'
+        self.config_shortcuts = 'shortcuts.json'
+
         self.shortcuts = {}
         self.bind_shortcuts()
 
-        self.config_mtime = 0
-        self.user_config_file = os.path.join(PATH, 'config_user.json')
-        self.system_config_file = os.path.join(PATH, 'config_system.json')
+        # self.user_config_file = os.path.join(PATH, 'config_user.json')
+        # self.system_config_file = os.path.join(PATH, 'config_system.json')
+
         self.options = dict()
         self.conflict_lst = []
         self.trie = KeyTrie(self)
@@ -1045,18 +1076,23 @@ class Travel(QWidget):
                 keyword_all.add(key)
 
     def load_config(self):
-        mt = os.path.getmtime(self.user_config_file)
+        mt = os.path.getmtime(self.config_user)
         if self.config_mtime == mt:
             return
 
         self.trie.clear()
         self.trie_last = None
-        with open(self.user_config_file, 'rt', encoding='utf-8') as f:
-            user_config = json.load(f)
-        with open(self.system_config_file, 'rt', encoding='utf-8') as f:
-            system_config = json.load(f)
-        self.options = system_config.get('options', {})
-        for k, v in user_config.get('options', {}).items():
+
+        config_system = load_json(self.config_system)
+        config_user = load_json(self.config_user)
+
+        # with open(self.user_config_file, 'rt', encoding='utf-8') as f:
+        #     user_config = json.load(f)
+        # with open(self.system_config_file, 'rt', encoding='utf-8') as f:
+        #     system_config = json.load(f)
+
+        self.options = config_system.get('options', {})
+        for k, v in config_user.get('options', {}).items():
             self.options[k] = v
 
         keyword_sys = set()
@@ -1065,13 +1101,13 @@ class Travel(QWidget):
         typs = ['Sp', 'Web', 'App', 'Mac', 'Py']
         insert_dct = {typ: {} for typ in typs}
 
-        self.parse_keywords('Sp', system_config, 'sys', insert_dct,
+        self.parse_keywords('Sp', config_system, 'sys', insert_dct,
                             keyword_sys, keyword_usr, keyword_all)
         for typ in typs[1:]:
-            self.parse_keywords(typ, user_config, 'usr', insert_dct,
+            self.parse_keywords(typ, config_user, 'usr', insert_dct,
                                 keyword_sys, keyword_usr, keyword_all)
         for typ in typs[1:]:
-            self.parse_keywords(typ, system_config, 'sys', insert_dct,
+            self.parse_keywords(typ, config_system, 'sys', insert_dct,
                                 keyword_sys, keyword_usr, keyword_all)
         for typ in typs:
             self.trie.inserts(sorted(insert_dct[typ].items()))
@@ -1137,8 +1173,7 @@ class Travel(QWidget):
 
     def bind_shortcuts(self):
         self.shortcuts_for_human = OrderedDict()
-        shortcuts_config = 'shortcuts.json'
-        for comp, dct in load_json(shortcuts_config).items():
+        for comp, dct in load_json(self.config_shortcuts).items():
             obj = self.__dict__.get(comp, self)
             for func, ks in dct.items():
                 if func in obj.__class__.__dict__:
@@ -1168,8 +1203,10 @@ class Travel(QWidget):
             self.label.quit()
             self.setHidden(True)
             if PLATFORM == "Darwin":
-                self._subprocess_popen(
-                    "osascript -e 'tell application \"System Events\" to key code 48 using {command down}'")
+                run_apple_script(
+                    'tell application \"System Events\"'
+                    'to key code 48 using {command down}'
+                )
 
     def activate_safely(self):
         # if not self.isActiveWindow(): # NOTE: do not add this
@@ -1386,11 +1423,9 @@ class Travel(QWidget):
             if text.startswith('~'):
                 text = os.path.expanduser(text)
             if os.path.isdir(text):
-                return self._subprocess_popen(
-                    [self.open_dir_cmd, text], shell=shell)
+                return run_script([self.open_dir_cmd, text], shell=shell)
             elif os.path.isfile(text):
-                return self._subprocess_popen(
-                    [self.open_file_cmd, text], shell=shell)
+                return run_script([self.open_file_cmd, text], shell=shell)
             else:
                 return self.complete_path(text[:self.input.cursorPosition()])
 
@@ -1451,30 +1486,30 @@ class Travel(QWidget):
         cmd = dct['Command']
         # logger.info("argument = {}, cmd = {}".format(args, cmd))
         if args.rsplit(' ', 1)[-1].lower() == 'new':
-            return self._subprocess_popen('{} {}'.format(cmd, args[:-4]))
+            return run_script('{} {}'.format(cmd, args[:-4]))
 
         # use case: command + path completion
         if os.path.exists(args):
             if ' ' in cmd:
                 cmd = '"' + cmd + '"'
-            return self._subprocess_popen('{} {}'.format(cmd, args))
+            return run_script('{} {}'.format(cmd, args))
 
         for pattern in [dct.get('Pattern', ''), key]:
             if pattern:
                 ret = self.screen.activate(pattern)
                 if not isinstance(ret, Message):
                     return ret
-        return self._subprocess_popen('{} {}'.format(cmd, args))
+        return run_script('{} {}'.format(cmd, args))
 
     def _activate_or_open_on_mac(self, key, args, dct):
         cmd = dct['Command']
         if cmd.startswith("file://"):
-            s = "osascript -e 'tell application \"{}\" to open location \"{}\"'"
+            s = 'tell application \"{}\" to open location \"{}\"'
             wb = self.default_web_browser or "safari"
             #os.system(s.format(wb, cmd.format(args)))
-            self._subprocess_popen(s.format(wb, cmd.format(args)))
-            return self._subprocess_popen("open -a {}".format(wb))
-        return self._subprocess_popen("open -a {} {}".format(cmd, args))
+            run_apple_script(s.format(wb, cmd.format(args)))
+            return run_script("open -a {}".format(wb))
+        return run_script("open -a {} {}".format(cmd, args))
 
     def _run_workflow(self, py_file, args):
         dct = {}
@@ -1510,23 +1545,6 @@ class Travel(QWidget):
                          for ks, func in self.shortcuts_for_human.items()])
         else:
             return Message('Unimplemented sp-keyword: {}!'.format(key))
-
-    def _subprocess_popen(self, cmd, shell=True):
-        p = subprocess.Popen(cmd, shell=shell, start_new_session=True,
-                             stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE, universal_newlines=True)
-        try:
-            _, err = p.communicate(timeout=0.1) # 0.1s
-        except subprocess.TimeoutExpired:
-            err = ''
-
-        if PLATFORM == 'Linux':
-            pass
-            # subprocess.call(['kill', str(p.pid)]) # kill sh -c ... process
-        if err:
-            return Message(err.strip())
-        else:
-            return 'destroy'
 
     def add_listener(self, hotkey_thread):
         self.listener = hotkey_thread
@@ -1621,8 +1639,10 @@ def main(kuma, hotkey_thread):
     sys.exit(app.exec_())
 
 
-if __name__ == '__main__':
+app = QApplication.instance() or QApplication(sys.argv)
+# if it does not exist then a QApplication is created (windows)
 
+if __name__ == '__main__':
     self = Travel(BaseScreen())
     self.show()
     app.installEventFilter(self)
