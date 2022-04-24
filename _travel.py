@@ -1076,7 +1076,7 @@ class Travel(QWidget):
                 keyword_all.add(key)
 
     def load_config(self):
-        mt = os.path.getmtime(self.config_user)
+        mt = os.path.getmtime(os.path.join(PATH, self.config_user))
         if self.config_mtime == mt:
             return
 
