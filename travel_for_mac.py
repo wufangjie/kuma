@@ -25,7 +25,7 @@ class DarwinScreen(BaseScreen):
 
 
 def run_event_loop(keyboard_tap_callback):
-    logger.info("try to load mac hotkey event loop")
+    # logger.info("try to load mac hotkey event loop")
 
     for t in [Quartz.kCGEventKeyDown, Quartz.kCGEventFlagsChanged]:
         # Set up a tap, with type of tap, location, options and event mask

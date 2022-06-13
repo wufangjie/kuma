@@ -2,6 +2,7 @@ import os
 import json
 import subprocess
 import platform
+from base import Message
 
 
 PLATFORM = platform.system() # {'Linux', 'Windows', 'Darwin'}
@@ -18,24 +19,24 @@ def load_json(filename, path=PATH):
         return json.load(f)
 
 
-
 def run_script(cmd, shell=True):
-    p = subprocess.Popen(cmd, shell=shell, start_new_session=True,
-                         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE, universal_newlines=True)
-    try:
-        _, err = p.communicate(timeout=0.1) # 0.1s
-    except subprocess.TimeoutExpired:
-        err = ''
+    with subprocess.Popen(
+            cmd, shell=shell, start_new_session=True,
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, universal_newlines=True
+    ) as p:
+        # p = subprocess.Popen(cmd, shell=shell, start_new_session=True,
+        #                      stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        #                      stderr=subprocess.PIPE, universal_newlines=True)
+        try:
+            _, err = p.communicate(timeout=0.1) # 0.1s
+        except subprocess.TimeoutExpired:
+            err = ''
 
-    # if PLATFORM == 'Linux':
-    #     pass
-    #     # subprocess.call(['kill', str(p.pid)]) # kill sh -c ... process
-    if err:
-        return Message(err.strip())
-    else:
+        if err:
+            return Message(err.strip())
         return 'destroy'
 
 
 def run_apple_script(cmd, shell=True):
-    return run_script("osascript -e '{}'".format(cmd, True))
+    return run_script("osascript -e '{}'".format(cmd), shell)
