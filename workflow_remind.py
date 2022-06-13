@@ -1,13 +1,11 @@
-from json import loads
-import logging
-import random
-import sys
-import time
-import pickle
 import os
-from datetime import datetime, timedelta
-import logging
+import time
 import re
+import logging
+import pickle
+from datetime import datetime, timedelta
+
+from base import Message
 
 from PyQt5.QtCore import QRunnable, Qt, QThreadPool, QThread, pyqtSignal
 
@@ -54,7 +52,6 @@ class Reminder:
             self.items = obj
         except:
             pass
-        
 
     def save(self):
         try:
@@ -101,9 +98,8 @@ class Reminder:
                 target_date = datetime.strptime(date_str, '%Y%m%d%H%M')
             if target_date != None:
                 return target_date
-        
+
         raise ValueError('Invalid date string')
-        
 
     def add_by_command(self, command_arg):
         try:
@@ -126,12 +122,15 @@ class Reminder:
 class ReminderRunner(QThread):
     show_message = pyqtSignal(str)
 
-    def __init__(self, send_notification_func):
+    def __init__(self):
         super().__init__()
         self.reminder = Reminder()
         self.interval = UPDATE_INTERVAL
+        self.send_notification_func = None
+
+    def connect(self, send_notification_func):
         self.show_message.connect(send_notification_func)
-    
+
     def add_by_command(self, command_arg):
         return self.reminder.add_by_command(command_arg)
 
@@ -141,10 +140,21 @@ class ReminderRunner(QThread):
         while True:
             due_items = self.reminder.check_time()
             if len(due_items) > 0:
-                out_str = '提醒:'+';'.join([item.text for item in due_items])
+                out_str = '提醒: '+';'.join([item.text for item in due_items])
                 self.show_message.emit(out_str)
             time.sleep(self.interval)
 
+
+reminder = ReminderRunner()
+
+def main(kuma, args):
+    if reminder.send_notification_func is None:
+        reminder.connect(kuma.send_notification)
+        reminder.start()
+    msg = reminder.add_by_command(args)
+    if msg != None:
+        return Message(msg)#, ms=10000, action='kill')
+    return 'destroy'
 
 # just some test cases
 if __name__ == '__main__':

@@ -85,6 +85,26 @@
       "Keyword": "terminal",
       "Platform": "Darwin",
       "Command": "Terminal"
+    },
+    {
+      "Keyword": "setting",
+      "Platform": "Darwin",
+      "Command": "System Preferences"
+    },
+    {
+      "Keyword": "numbers",
+      "Platform": "Darwin",
+      "Command": "Numbers"
+    },
+    {
+      "Keyword": "preview",
+      "Platform": "Darwin",
+      "Command": "Preview"
+    },
+    {
+      "Keyword": "launchpad",
+      "Platform": "Darwin",
+      "Command": "Launchpad"
     }
   ],
   "App": [
@@ -232,6 +252,10 @@
       "Keyword": "demo",
       "File": "workflow_code_search",
       "Description": "search and copy code to system clipboard"
+    },
+    {
+      "Keyword": "remind",
+      "Description": "Send a notification to user at specified time"
     }
   ],
   "Sp": [
@@ -242,10 +266,6 @@
     {
       "Keyword": "close",
       "Description": "close window by keyword"
-    },
-    {
-      "Keyword": "remind",
-      "Description": "Send a notification to user at specified time"
     },
     {
       "Keyword": "quit",

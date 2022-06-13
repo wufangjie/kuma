@@ -17,7 +17,7 @@ import time
 import functools
 import webbrowser
 from urllib.parse import quote
-from collections import OrderedDict#, deque
+from collections import OrderedDict
 from abc import abstractmethod
 
 from base import Data, Message
@@ -25,15 +25,13 @@ from utils import PATH, PLATFORM
 from utils import load_json, run_script, run_apple_script
 
 from log import init_log
-from reminder import ReminderRunner
 import logging
-# import code_search
 
 
 ########################################################################
 # global variables
 ########################################################################
-DEBUG = True#False#
+DEBUG = False#True#
 
 logger = logging.getLogger(__name__)
 re_path = re.compile(r'^([A-Za-z]:|~|/)')
@@ -87,12 +85,6 @@ class Font:
     @property
     def PS5(self):
         return self.PS1 * 5 # 2 + 3 = 5
-
-    # def _(self, x):
-    #     # self.FM = QFontMetrics(self.FONT_MAIN)
-    #     # self.FM_LONG = QFontMetrics(self.FONT_LONG)
-    #     # self.PS1 = round(FM.height() / 3) # pixelSize
-    #     self.PS1 = x
 
 
 class CursorStyle(QProxyStyle):
@@ -764,8 +756,8 @@ class Label(QPushButton):#QLabel):#
 
         self.timer = QTimer()
         self.timer.setInterval(100)
-        self.timer.timeout.connect(self.quit)
-        self.hide_all = False
+        self.timer.timeout.connect(self.take_action)
+        self.action = "hidden"
 
     def reset_font(self, font):
         if font == 'long':
@@ -780,8 +772,12 @@ class Label(QPushButton):#QLabel):#
         self.adjustSize()
         self.master.adjustSize()
         self.timer.stop()
-        if self.hide_all:
+
+    def take_action(self):
+        if self.action == "kill":
             self.master.quit()
+        else:
+            self.quit()
 
     def wrap_text(self, text):
         max_w = self.master.width() - 50
@@ -795,21 +791,27 @@ class Label(QPushButton):#QLabel):#
                 i0 = 0
                 step = int(max_w / row_w * row_n)
                 while i0 < row_n:
-                    w = self.FM.width(row[i0 : i0 + step])
-                    if w < max_w:
-                        while w < max_w:
-                            step += 1
-                            if i0 + step > row_n:
-                                break
-                            w = self.FM.width(row[i0 : i0 + step])
-                        step -= 1
-                    elif w > max_w:
-                        while w > max_w:
-                            step -= 1
-                            w = self.FM.width(row[i0 : i0 + step])
+                    step = self.find_best_step(row, i0, step)
                     wrapped.append(row[i0 : i0 + step])
                     i0 += step
         return '\n'.join(wrapped)
+
+    def find_best_step(self, row, i0, step):
+        max_w = self.master.width() - 50
+        row_n = len(row)
+        w = self.FM.width(row[i0 : i0 + step])
+        if w < max_w:
+            while w < max_w:
+                step += 1
+                if i0 + step > row_n:
+                    break
+                w = self.FM.width(row[i0 : i0 + step])
+            step -= 1
+        elif w > max_w:
+            while w > max_w:
+                step -= 1
+                w = self.FM.width(row[i0 : i0 + step])
+        return step
 
     def update_data(self, msg):
         self.reset_font(msg.font)
@@ -817,16 +819,8 @@ class Label(QPushButton):#QLabel):#
         self.setHidden(False)
         self.adjustSize()
         self.master.adjustSize()
-        if msg.action == 'hide':
-            self.timer.start(int(msg.ms)) # <=0 means
-            self.hide_all = False
-        if msg.action == 'hide_all':
-            self.timer.start(int(msg.ms))
-            self.hide_all = True
-        elif msg.action == 'kill':
-            self.master.quit()
-        else:
-            pass
+        self.action = msg.action
+        self.timer.start(int(msg.ms)) # <= 0 means no wait
 
 
 ########################################################################
@@ -1042,8 +1036,6 @@ class Travel(QWidget):
         self.default_web_browser = self.options["default_web_browser"].get(
             PLATFORM, "").lower()
 
-        self.reminder = ReminderRunner(self.send_notification)
-
     @property
     def is_completing(self):
         return self.popup and isinstance(self.popup.data, DataComplete)
@@ -1255,7 +1247,7 @@ class Travel(QWidget):
 
     def send_notification(self, msg):
         self._show()
-        self.show_message(msg, ms=10000, action='hide_all')
+        self.show_message(msg, ms=10000, action='kill')
 
     def show_conflict_msg_if_need(self):
         if self.conflict_lst:
@@ -1509,7 +1501,7 @@ class Travel(QWidget):
             #os.system(s.format(wb, cmd.format(args)))
             run_apple_script(s.format(wb, cmd.format(args)))
             return run_script("open -a {}".format(wb))
-        return run_script("open -a {} {}".format(cmd, args))
+        return run_script("open -a '{}' {}".format(cmd, args))
 
     def _run_workflow(self, py_file, args):
         dct = {}
@@ -1525,7 +1517,8 @@ class Travel(QWidget):
         elif key == 'close':
             return self.screen.close(args)
         elif key == 'quit':
-            sys.exit(0)
+            QCoreApplication.instance().quit() # sys.exit(0)
+            # NOTE: use command + Q to quit kuma on macos
         elif key == 'restart':
             # NOTE: It works on linux, but not in emacs comint mode
             exe = sys.executable
@@ -1533,13 +1526,6 @@ class Travel(QWidget):
                 exe = '"' + exe + '"'
             # wow, this command is amazing, no longer needs to sys.exit
             os.execv(exe, [exe, sys.argv[0]] + sys.argv)
-            # sys.exit(0)
-        elif key == 'remind':
-            msg = self.reminder.add_by_command(args)
-            if msg != None:
-                self.show_message(msg)
-                return None
-            return 'destroy'
         elif key == 'shortcuts':
             return Data([{'left': ks, 'main': func}
                          for ks, func in self.shortcuts_for_human.items()])
@@ -1630,7 +1616,6 @@ def main(kuma, hotkey_thread):
         if kuma.options.get('hide_on_start') != True:
             kuma._show()
     kuma.listener.start()
-    kuma.reminder.start()
     try:
         __file__
     except NameError:
@@ -1646,7 +1631,6 @@ if __name__ == '__main__':
     self = Travel(BaseScreen())
     self.show()
     app.installEventFilter(self)
-
 # NOTE: use QThread and pyqtSignal instead of threading.Thread
 # TODO: shortcut for topmost?
 # TODO: disable pyqt5's default useless shortcuts?
