@@ -1,3 +1,16 @@
+"""kuma"""
+import os
+import re
+import sys
+#import json
+import time
+import functools
+import webbrowser
+from urllib.parse import quote
+from collections import OrderedDict
+from abc import abstractmethod
+import logging
+
 from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtWidgets import QLineEdit, QLabel
 from PyQt5.QtWidgets import QPushButton
@@ -9,23 +22,11 @@ from PyQt5.QtWidgets import QStyle, QProxyStyle
 from PyQt5.QtGui import QFont, QFontMetrics, QKeySequence#, QIcon, QPixmap
 from PyQt5.QtCore import Qt, QEvent, QTimer
 
-import os
-import re
-import sys
-import json
-import time
-import functools
-import webbrowser
-from urllib.parse import quote
-from collections import OrderedDict
-from abc import abstractmethod
-
 from base import Data, Message
 from utils import PATH, PLATFORM
 from utils import load_json, run_script, run_apple_script
 
 from log import init_log
-import logging
 
 
 ########################################################################
@@ -39,15 +40,15 @@ re_path = re.compile(r'^([A-Za-z]:|~|/)')
 
 class Theme:
     def __init__(self, filename='theme.json'):
-        self.data = load_json('theme.json')
+        self.data = load_json(filename)
         for key, val in self.data.items():
             if isinstance(val, (list, tuple)):
                 self.data[key] = ' '.join(val)
         QApplication.setStyle(self.get('app_style', 'Fusion')) # NOTE: for windows
 
-        if False:
-            from PyQt5.QtWidgets import QStyleFactory
-            print(QStyleFactory.keys()) # see more application styles
+        # you can find more application styles by:
+        # from PyQt5.QtWidgets import QStyleFactory
+        # print(QStyleFactory.keys())
 
     def __getitem__(self, key):
         return self.data.get(key, '')
@@ -994,7 +995,7 @@ class Travel(QWidget):
         # self.user_config_file = os.path.join(PATH, 'config_user.json')
         # self.system_config_file = os.path.join(PATH, 'config_system.json')
 
-        self.options = dict()
+        self.options = {}
         self.conflict_lst = []
         self.trie = KeyTrie(self)
         self.trie_last = None
@@ -1212,7 +1213,7 @@ class Travel(QWidget):
 
     def dummy(self):
         """Bind shortcuts your want to disable"""
-        pass
+        #pass
 
     def move_window(self, dx=0, dy=0):
         rect = self.geometry()
@@ -1267,7 +1268,8 @@ class Travel(QWidget):
             else:
                 self.complete_keyword(text)
 
-    def is_path(self, text):
+    @classmethod
+    def is_path(cls, text):
         return re_path.match(text)
 
     def complete_path(self, text):
@@ -1340,10 +1342,11 @@ class Travel(QWidget):
         return ''.join(ret)
 
     def listdir(self, dirname, prefix=''):
-        for root, dirs, files in os.walk(dirname):
+        for _root, dirs, files in os.walk(dirname):
             if prefix:
-                dirs = [d + '/' for d in dirs if d.startswith(prefix)]
-                files = [d for d in files if d.startswith(prefix)]
+                # NOTE: I find that os.walk can not promise the order
+                dirs = sorted([d + '/' for d in dirs if d.startswith(prefix)])
+                files = sorted([d for d in files if d.startswith(prefix)])
             else:
                 dirs = [d + '/' for d in dirs]
             if dirs:
@@ -1379,7 +1382,8 @@ class Travel(QWidget):
     def complete_insert(self, insert):
         self.input.complete_insert(insert)
 
-    def set_clipboard(self, text):
+    @classmethod
+    def set_clipboard(cls, text):
         cb = QApplication.clipboard()
         cb.clear(mode=cb.Clipboard)
         cb.setText(text, mode=cb.Clipboard)
@@ -1411,7 +1415,7 @@ class Travel(QWidget):
             return 'destroy'
 
         if self.is_path(text):
-            shell = True if PLATFORM == 'Windows' else False
+            shell = PLATFORM == 'Windows'
             if text.startswith('~'):
                 text = os.path.expanduser(text)
             if os.path.isdir(text):
@@ -1493,7 +1497,7 @@ class Travel(QWidget):
                     return ret
         return run_script('{} {}'.format(cmd, args))
 
-    def _activate_or_open_on_mac(self, key, args, dct):
+    def _activate_or_open_on_mac(self, _key, args, dct):
         cmd = dct['Command']
         if cmd.startswith("file://"):
             s = 'tell application \"{}\" to open location \"{}\"'
@@ -1517,8 +1521,12 @@ class Travel(QWidget):
         elif key == 'close':
             return self.screen.close(args)
         elif key == 'quit':
-            QCoreApplication.instance().quit() # sys.exit(0)
-            # NOTE: use command + Q to quit kuma on macos
+            if PLATFORM == "Darwin":
+                # NOTE: use command + Q to quit kuma on macos
+                run_apple_script('tell application "System Events" '
+                                 'to keystroke "q" using command down')
+            else:
+                sys.exit(0)
         elif key == 'restart':
             # NOTE: It works on linux, but not in emacs comint mode
             exe = sys.executable
@@ -1560,7 +1568,7 @@ class BaseScreen:
         """Return list of (app_name, pid, title, hw) tuple
         +NOTE: important! RECORD current window+
         """
-        pass
+        #pass
 
     @abstractmethod
     def activate_window(self, hw):
@@ -1628,9 +1636,10 @@ app = QApplication.instance() or QApplication(sys.argv)
 # if it does not exist then a QApplication is created (windows)
 
 if __name__ == '__main__':
-    self = Travel(BaseScreen())
-    self.show()
-    app.installEventFilter(self)
+    pass
+    # self = Travel(BaseScreen())
+    # self.show()
+    # app.installEventFilter(self)
 # NOTE: use QThread and pyqtSignal instead of threading.Thread
 # TODO: shortcut for topmost?
 # TODO: disable pyqt5's default useless shortcuts?
