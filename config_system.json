@@ -2,7 +2,7 @@
   "Web": [
     {
       "Keyword": "bing",
-      "Command": "https://www.bing.com/search?q={}"
+      "Command": "https://www2.bing.com/search?q={}"
     },
     {
       "Keyword": "dict(bing)",
@@ -243,10 +243,6 @@
     {
       "Keyword": "eval",
       "Description": "evaluate one line python code"
-    },
-    {
-      "Keyword": "rust-eval",
-      "Description": "evaluate one line/several lines of Rust code"
     },
     {
       "Keyword": "demo",

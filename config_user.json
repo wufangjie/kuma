@@ -14,6 +14,18 @@
   ],
   "App": [
     {
+      "Keyword": "system",
+      "Platform": "Darwin",
+      "Description": "open system preferences's current pane",
+      "Command": "open -b com.apple.systempreferences /System/Library/PreferencePanes/ClassKitPreferencePane.prefPane"
+    },
+    {
+      "Keyword": "keyboard",
+      "Platform": "Darwin",
+      "Description": "open system preferences's keyboard pane",
+      "Command": "open -b com.apple.systempreferences /System/Library/PreferencePanes/Keyboard.prefPane/"
+    },
+    {
       "Keyword": "code",
       "Platform": "Windows",
       "Command": "C:/Users/Mi/AppData/Local/Programs/Microsoft VS Code/Code.exe"
@@ -29,6 +41,7 @@
       "Command": "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe"
     }
   ],
+  "Py": [],
   "options": {
     "hide_on_start": false,
     "hotkey_windows": "0xba",
